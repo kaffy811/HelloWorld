@@ -1,61 +1,110 @@
-export default function Home() {
-  return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-6">
-      {/* Background glow */}
-      <div className="blob blob-one" />
-      <div className="blob blob-two" />
-      <div className="blob blob-three" />
+import { supabase } from "@/lib/supabase";
 
-      {/* Grid background */}
-      <div className="absolute inset-0 bg-grid opacity-30" />
+type TechStack = {
+    id: number;
+    name: string;
+    category: string;
+    description: string;
+};
 
-      {/* Main card */}
-      <section className="glass-card relative z-10 max-w-4xl px-10 py-16 text-center sm:px-16">
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm text-white/70 backdrop-blur-md">
-          <span className="animate-pulse">✦</span>
-          My first Next.js deployment
-        </div>
+export default async function Home() {
+    const { data, error } = await supabase
+        .from("tech_stack")
+        .select("id, name, category, description")
+        .order("id");
 
-        <h1 className="gradient-text text-6xl font-black tracking-tight sm:text-8xl md:text-9xl">
-          Hello World
-        </h1>
+    const techStack: TechStack[] = data ?? [];
 
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/60 sm:text-xl">
-          Built with Next.js, deployed with Vercel, and made with a little
-          imagination.
-        </p>
+    return (
+        <main className="relative min-h-screen overflow-hidden px-6 py-20">
+            {/* Background glow */}
+            <div className="blob blob-one" />
+            <div className="blob blob-two" />
+            <div className="blob blob-three" />
+            <div className="absolute inset-0 bg-grid opacity-30" />
 
-        <div className="mt-10 flex flex-wrap justify-center gap-4">
-          <a
-            href="https://nextjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="primary-button"
-          >
-            Explore Next.js
-            <span>↗</span>
-          </a>
+            <div className="relative z-10 mx-auto max-w-6xl">
+                {/* Hero */}
+                <section className="mb-16 text-center">
+                    <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm text-white/70 backdrop-blur-md">
+                        <span className="animate-pulse">✦</span>
+                        Next.js × Supabase
+                    </div>
 
-          <a
-            href="https://vercel.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="secondary-button"
-          >
-            Deployed on Vercel
-          </a>
-        </div>
+                    <h1 className="gradient-text text-6xl font-black tracking-tight sm:text-8xl">
+                        Hello World
+                    </h1>
 
-        <div className="mt-12 flex items-center justify-center gap-3 text-xs uppercase tracking-[0.3em] text-white/30">
-          <span className="h-px w-10 bg-white/20" />
-          2026
-          <span className="h-px w-10 bg-white/20" />
-        </div>
-      </section>
+                    <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/60">
+                        A simple full-stack app powered by Next.js, Supabase, and Vercel.
+                    </p>
+                </section>
 
-      <p className="absolute bottom-8 text-sm text-white/30">
-        Made by Hoi Yan Lo
-      </p>
-    </main>
-  );
+                {/* Error state */}
+                {error && (
+                    <div className="glass-card mx-auto mb-8 max-w-2xl p-6 text-center">
+                        <p className="text-red-300">
+                            Unable to load data: {error.message}
+                        </p>
+                    </div>
+                )}
+
+                {/* Database-driven cards */}
+                {!error && (
+                    <>
+                        <div className="mb-8 text-center">
+                            <p className="text-xs uppercase tracking-[0.35em] text-white/40">
+                                My Development Stack
+                            </p>
+
+                            <h2 className="mt-3 text-3xl font-bold text-white">
+                                Powered by real data.
+                            </h2>
+                        </div>
+
+                        <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                            {techStack.map((tech) => (
+                                <article
+                                    key={tech.id}
+                                    className="tech-card group"
+                                >
+                                    <div className="mb-8 flex items-center justify-between">
+                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-widest text-white/50">
+                      {tech.category}
+                    </span>
+
+                                        <span className="text-sm text-white/20">
+                      {String(tech.id).padStart(2, "0")}
+                    </span>
+                                    </div>
+
+                                    <h3 className="text-3xl font-bold text-white transition-transform duration-300 group-hover:translate-x-1">
+                                        {tech.name}
+                                    </h3>
+
+                                    <p className="mt-4 leading-relaxed text-white/50">
+                                        {tech.description}
+                                    </p>
+
+                                    <div className="mt-8 h-px bg-gradient-to-r from-white/20 to-transparent" />
+                                </article>
+                            ))}
+                        </section>
+
+                        {techStack.length === 0 && (
+                            <p className="text-center text-white/50">
+                                No technologies found.
+                            </p>
+                        )}
+                    </>
+                )}
+
+                <footer className="mt-16 text-center">
+                    <p className="text-sm text-white/35">
+                        Data fetched live from Supabase · Built by Hoi Yan Lo
+                    </p>
+                </footer>
+            </div>
+        </main>
+    );
 }
