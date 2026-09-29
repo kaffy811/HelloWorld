@@ -1,10 +1,147 @@
+import { redirect } from "next/navigation";
+import { onboardingDestination } from "@/lib/onboarding";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
-type Company = { ticker: string; name: string; sector: string; summary: string; learning_question: string; source_url: string; };
+type Company = {
+  ticker: string;
+  name: string;
+  sector: string;
+  summary: string;
+  learning_question: string;
+  source_url: string;
+};
 export default async function Home() {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("companies").select("ticker,name,sector,summary,learning_question,source_url").order("name");
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("display_name,first_name,last_name,onboarding_completed_at")
+      .eq("id", user.id)
+      .single();
+    if (profileError || !profile) throw new Error("Profile unavailable");
+    const destination = onboardingDestination(profile);
+    if (destination !== "/") redirect(destination);
+  }
+  const { data, error } = await supabase
+    .from("companies")
+    .select("ticker,name,sector,summary,learning_question,source_url")
+    .order("name");
   const companies = (data ?? []) as Company[];
-  return <><section className="hero"><div><span className="eyebrow">LESS JARGON. MORE UNDERSTANDING.</span><h1>Know the company.<br/><span>Then form your view.</span></h1><p>A gentle starting point for US stocks. Discover how a business works, learn what to ask, and build understanding at your own pace.</p><a className="button" href="#companies">Explore companies <span>↓</span></a><Link className="text-link" href="/notebook">Your learning space ↗</Link></div><aside className="guide"><span className="eyebrow">YOUR FIRST THREE QUESTIONS</span><ol><li><span>01</span><div><strong>How does it make money?</strong><p>Start with the business, not the stock price.</p></div></li><li><span>02</span><div><strong>What should I look into?</strong><p>A useful question is better than a quick verdict.</p></div></li><li><span>03</span><div><strong>What am I still missing?</strong><p>Keep uncertainty part of your understanding.</p></div></li></ol><div className="guide-note">Small steps. A more informed perspective.</div></aside></section><section id="companies"><div className="section-title"><div><span className="eyebrow">START WITH A BUSINESS YOU KNOW</span><h2>Company explorer</h2></div><span className="pill">{companies.length} learning examples</span></div><p className="section-description">Plain-English introductions, saved in our database. These examples are not a stock ranking.</p>{error ? <div className="panel notice" role="alert"><h3>Company data is temporarily unavailable</h3><p>Please try again later. We do not replace missing database results with invented data.</p></div> : companies.length === 0 ? <div className="panel"><h3>No companies yet</h3><p>Learning examples will appear here once they have been added.</p></div> : <div className="cards">{companies.map(c => <article className="company panel" key={c.ticker}><div className="card-top"><span className="ticker">{c.ticker}</span><span className="small">{c.sector}</span></div><h3>{c.name}</h3><p>{c.summary}</p><div className="question"><span className="eyebrow">A QUESTION TO EXPLORE</span><p>{c.learning_question}</p></div><a className="source" href={c.source_url} target="_blank" rel="noopener noreferrer">Visit company source ↗</a></article>)}</div>}</section><section className="bottom-note"><h2>Understanding comes before a decision.</h2><p>This first release introduces businesses. Financial analysis, multilingual explanations and AI research are planned for later releases.</p></section></>;
+  return (
+    <>
+      <section className="hero">
+        <div>
+          <span className="eyebrow">LESS JARGON. MORE UNDERSTANDING.</span>
+          <h1>
+            Know the company.
+            <br />
+            <span>Then form your view.</span>
+          </h1>
+          <p>
+            A gentle starting point for US stocks. Discover how a business
+            works, learn what to ask, and build understanding at your own pace.
+          </p>
+          <a className="button" href="#companies">
+            Explore companies <span>↓</span>
+          </a>
+          <Link className="text-link" href="/notebook">
+            Your learning space ↗
+          </Link>
+        </div>
+        <aside className="guide">
+          <span className="eyebrow">YOUR FIRST THREE QUESTIONS</span>
+          <ol>
+            <li>
+              <span>01</span>
+              <div>
+                <strong>How does it make money?</strong>
+                <p>Start with the business, not the stock price.</p>
+              </div>
+            </li>
+            <li>
+              <span>02</span>
+              <div>
+                <strong>What should I look into?</strong>
+                <p>A useful question is better than a quick verdict.</p>
+              </div>
+            </li>
+            <li>
+              <span>03</span>
+              <div>
+                <strong>What am I still missing?</strong>
+                <p>Keep uncertainty part of your understanding.</p>
+              </div>
+            </li>
+          </ol>
+          <div className="guide-note">
+            Small steps. A more informed perspective.
+          </div>
+        </aside>
+      </section>
+      <section id="companies">
+        <div className="section-title">
+          <div>
+            <span className="eyebrow">START WITH A BUSINESS YOU KNOW</span>
+            <h2>Company explorer</h2>
+          </div>
+          <span className="pill">{companies.length} learning examples</span>
+        </div>
+        <p className="section-description">
+          Plain-English introductions, saved in our database. These examples are
+          not a stock ranking.
+        </p>
+        {error ? (
+          <div className="panel notice" role="alert">
+            <h3>Company data is temporarily unavailable</h3>
+            <p>
+              Please try again later. We do not replace missing database results
+              with invented data.
+            </p>
+          </div>
+        ) : companies.length === 0 ? (
+          <div className="panel">
+            <h3>No companies yet</h3>
+            <p>Learning examples will appear here once they have been added.</p>
+          </div>
+        ) : (
+          <div className="cards">
+            {companies.map((c) => (
+              <article className="company panel" key={c.ticker}>
+                <div className="card-top">
+                  <span className="ticker">{c.ticker}</span>
+                  <span className="small">{c.sector}</span>
+                </div>
+                <h3>{c.name}</h3>
+                <p>{c.summary}</p>
+                <div className="question">
+                  <span className="eyebrow">A QUESTION TO EXPLORE</span>
+                  <p>{c.learning_question}</p>
+                </div>
+                <a
+                  className="source"
+                  href={c.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Visit company source ↗
+                </a>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+      <section className="bottom-note">
+        <h2>Understanding comes before a decision.</h2>
+        <p>
+          This first release introduces businesses. Financial analysis,
+          multilingual explanations and AI research are planned for later
+          releases.
+        </p>
+      </section>
+    </>
+  );
 }

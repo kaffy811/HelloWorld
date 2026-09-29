@@ -2,15 +2,31 @@ import { redirect } from "next/navigation";
 import { loadProfile, avatarFor } from "@/lib/profile";
 import { onboardingDestination } from "@/lib/onboarding";
 import { ProfileForm } from "@/components/profile-form";
-export default async function Profile() {
+export default async function Onboarding({
+  searchParams,
+}: {
+  searchParams: Promise<{ edit?: string }>;
+}) {
   const { supabase, user, profile } = await loadProfile();
   const destination = onboardingDestination(profile);
-  if (destination !== "/") redirect(destination);
+  if (
+    destination === "/" ||
+    (destination === "/onboarding/preferences" &&
+      (await searchParams).edit !== "1")
+  )
+    redirect(destination);
   return (
     <section className="narrow panel">
-      <span className="eyebrow">YOUR PROFILE</span>
-      <h1>Your space, your name.</h1>
-      <p>Update your profile or edit your learning preferences below.</p>
+      <div className="step-indicator" aria-label="Step 1 of 2">
+        <span className="active">1 · Your profile</span>
+        <span>2 · Learning preferences</span>
+      </div>
+      <span className="eyebrow">WELCOME TO CLEARSTOCK</span>
+      <h1>What should we call you?</h1>
+      <p>
+        Add your name, and a photo if you like. Your learning preferences come
+        next.
+      </p>
       <ProfileForm
         userId={user.id}
         email={user.email ?? ""}
@@ -18,6 +34,7 @@ export default async function Profile() {
         firstName={profile.first_name ?? ""}
         lastName={profile.last_name ?? ""}
         avatarUrl={await avatarFor(supabase, profile.avatar_path)}
+        onboarding
       />
     </section>
   );
