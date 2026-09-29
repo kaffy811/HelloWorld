@@ -1,5 +1,5 @@
 "use client";
-import { useState, type FormEvent } from "react";
+import { useState, useRef, useEffect, type FormEvent, type ChangeEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -24,6 +24,61 @@ export function ProfileForm({
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const photoInput = useRef<HTMLInputElement>(null);
+  const photoDialog = useRef<HTMLDialogElement>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [photoPending, setPhotoPending] = useState(false);
+  const [downloadError, setDownloadError] = useState("");
+  const [downloading, setDownloading] = useState(false);
+  useEffect(() => {
+    return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
+  }, [previewUrl]);
+  const photoSrc = previewUrl || avatarUrl;
+  function choosePhoto() {
+    photoDialog.current?.close();
+    photoInput.current?.click();
+  }
+  function selectPhoto(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    event.target.value = "";
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || !file.size || file.size > 2 * 1024 * 1024) {
+      setMessage("Choose a JPG, PNG or WebP photo up to 2 MB.");
+      return;
+    }
+    setPreviewUrl(URL.createObjectURL(file));
+    setSelectedPhoto(file);
+    setPhotoPending(true);
+    setMessage("");
+    setDownloadError("");
+  }
+  async function downloadPhoto() {
+    setDownloading(true);
+    setDownloadError("");
+    try {
+      let blob: Blob;
+      if (selectedPhoto) blob = selectedPhoto;
+      else {
+        const response = await fetch(photoSrc);
+        if (!response.ok) throw new Error();
+        blob = await response.blob();
+      }
+      const extension = ({ "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" } as Record<string, string>)[blob.type] || "jpg";
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `profile-photo.${extension}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      setDownloadError("Could not download the photo. Please retry.");
+    } finally {
+      setDownloading(false);
+    }
+  }
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
@@ -39,7 +94,7 @@ export function ProfileForm({
         throw new Error("Enter a display name of 1–40 characters.");
       if (!first || !last || first.length > 80 || last.length > 80)
         throw new Error("Enter both names, up to 80 characters each.");
-      const file = form.get("photo");
+      const file = photoPending ? selectedPhoto : null;
       if (file instanceof File && file.size) {
         const extensions: Record<string, string> = {
           "image/jpeg": "jpg",
@@ -71,6 +126,7 @@ export function ProfileForm({
         .single();
       if (error || !data)
         throw new Error("Your profile could not be saved. Please retry.");
+      setPhotoPending(false);
       if (onboarding) router.push("/onboarding/preferences");
       else setMessage("Profile saved.");
       router.refresh();
@@ -98,25 +154,25 @@ export function ProfileForm({
       <form onSubmit={save}>
         <fieldset disabled={busy} className="form-fields">
           <div className="avatar-row">
-            {avatarUrl ? (
-              <Image
-                unoptimized
-                width={72}
-                height={72}
-                className="avatar"
-                src={avatarUrl}
-                alt="Your profile photo"
-              />
-            ) : (
-              <div className="avatar placeholder" aria-label="Default avatar">
-                {(displayName || firstName).charAt(0) || "U"}
-              </div>
-            )}
-            <div>
+            <button type="button" className="avatar-trigger" aria-label={photoSrc ? "View profile photo" : "Upload profile photo"} onClick={() => photoSrc ? photoDialog.current?.showModal() : choosePhoto()}>
+              {photoSrc ? (
+                <Image unoptimized width={72} height={72} className="avatar" src={photoSrc} alt="Your profile photo" />
+              ) : (
+                <span className="avatar placeholder">{(displayName || firstName).charAt(0) || "U"}</span>
+              )}
+              <span className="avatar-camera" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 6h4l2-3h4l2 3h4v14H4z"/><circle cx="12" cy="13" r="4"/></svg>
+              </span>
+            </button>
+            <div className="avatar-details">
               <strong>Your account</strong>
               <p className="small">{email}</p>
+              <button type="button" className="text-button avatar-change" onClick={choosePhoto}>{photoSrc ? "Change photo" : "Upload photo"}</button>
+              <p className="small">Optional · JPG, PNG or WebP · Up to 2 MB</p>
+              {photoPending && <p className="photo-pending" role="status">Photo not saved yet. {onboarding ? "Select Next to save." : "Select Save profile to save."}</p>}
             </div>
           </div>
+          <input ref={photoInput} type="file" hidden accept="image/jpeg,image/png,image/webp" aria-label="Choose profile photo" onChange={selectPhoto} />
           <label>
             Display name
             <input
@@ -152,18 +208,6 @@ export function ProfileForm({
               />
             </label>
           </div>
-          <label>
-            Profile photo <span className="small">Optional</span>
-            <input
-              type="file"
-              name="photo"
-              accept="image/jpeg,image/png,image/webp"
-            />
-            <span className="small">
-              JPG, PNG or WebP, up to 2 MB. Leave empty to skip and use your
-              default avatar.
-            </span>
-          </label>
           <button className="button" type="submit">
             {busy
               ? "Saving…"
@@ -176,6 +220,20 @@ export function ProfileForm({
           {message}
         </p>
       </form>
+      <dialog ref={photoDialog} className="photo-dialog" aria-labelledby="photo-dialog-title" onClick={(event) => { if (event.target === event.currentTarget) photoDialog.current?.close(); }}>
+        <div className="photo-dialog-content">
+          <div className="photo-dialog-heading">
+            <h2 id="photo-dialog-title">Profile photo</h2>
+            <button type="button" className="text-button photo-close" aria-label="Close photo preview" onClick={() => photoDialog.current?.close()}>×</button>
+          </div>
+          {photoSrc && <Image unoptimized width={480} height={480} className="photo-preview" src={photoSrc} alt="Your profile photo, full preview" />}
+          <div className="photo-dialog-actions">
+            <button type="button" className="button" onClick={choosePhoto} disabled={busy}>Change photo</button>
+            <button type="button" className="text-button" onClick={downloadPhoto} disabled={downloading || !photoSrc}>{downloading ? "Downloading…" : "Download image"}</button>
+          </div>
+          <p className="small" role="status">{downloadError || (photoPending ? "Preview only. Save your profile to apply this photo." : "")}</p>
+        </div>
+      </dialog>
       <div className="profile-links">
         {!onboarding && (
           <Link href="/profile/preferences">Edit learning preferences →</Link>
