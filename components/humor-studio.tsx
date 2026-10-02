@@ -1,0 +1,14 @@
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+export function HumorStudio({signedIn}:{signedIn:boolean}) {
+ const [file,setFile]=useState<File|null>(null); const [busy,setBusy]=useState(false); const [message,setMessage]=useState(""); const router=useRouter();
+ async function submit(e:React.FormEvent<HTMLFormElement>) {e.preventDefault(); if(!file)return; setBusy(true);setMessage("Looking closely, then finding the punchlines…");
+ try{const form=new FormData();form.set("image",file);const r=await fetch("/api/humor/generate",{method:"POST",body:form});const d=await r.json();if(!r.ok)throw new Error(d.error);setMessage("Four fresh captions are ready below.");router.refresh();}catch(e){setMessage(e instanceof Error?e.message:"Try again.");}finally{setBusy(false);}}
+ return <section className="studio panel" id="studio"><span className="eyebrow">01 / CAPTION STUDIO</span><h2>Your photo. Four punchlines.</h2><p>Give an ordinary moment an unreasonable amount of personality.</p>{signedIn?<form onSubmit={submit}><label className="dropzone">Choose your image<input aria-label="Choose your image" type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={e=>{const f=e.target.files?.[0];setMessage("");if(f && f.size>3000000){setFile(null);setMessage("Choose an image under 3 MB.");}else setFile(f||null);}}/><span>{file?.name||"JPEG, PNG or WebP · up to 3 MB"}</span></label><p className="small">Your image is sent to OpenAI to generate captions and shared with signed-in members when ready. Upload only images you have permission to share.</p><button className="button" disabled={!file||busy}>{busy?"Finding the funny…":"Make it funny ↗"}</button></form>:<a className="button" href="/login">Sign in to create ↗</a>}<p role="status" aria-live="polite">{message}</p></section>;
+}
+export function VoteButtons({captionId,vote}:{captionId:string,vote:number|null}) {
+ const [selected,setSelected]=useState(vote);const [busy,setBusy]=useState(false);const [error,setError]=useState("");
+ async function cast(value:number){setBusy(true);setError("");try{const r=await fetch("/api/humor/vote",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({captionId,value})});const d=await r.json();if(!r.ok){if(r.status===409)setSelected(0);throw new Error(d.error);}setSelected(value);}catch(e){setError(e instanceof Error?e.message:"Vote failed.");}finally{setBusy(false);}}
+ return <div><div className="vote-row"><button disabled={busy||selected!==null} aria-pressed={selected===1} onClick={()=>cast(1)}>↑ Made me laugh</button><button disabled={busy||selected!==null} aria-pressed={selected===-1} onClick={()=>cast(-1)}>↓ Not quite</button>{selected!==null&&<span className="small">Rated ✓</span>}</div>{error&&<p role="alert">{error}</p>}</div>;
+}
