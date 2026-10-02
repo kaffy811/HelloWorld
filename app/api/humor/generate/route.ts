@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as adminClient } from "@supabase/supabase-js";
 import { config } from "@/lib/supabase/config";
-import { imageType, captionsFrom } from "@/lib/humor-validation";
+import { imageType, captionsFrom, sameOrigin } from "@/lib/humor-validation";
 export const maxDuration = 120;
 async function llm(messages: unknown[], json = false) {
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -15,7 +15,7 @@ async function llm(messages: unknown[], json = false) {
   return result;
 }
 export async function POST(request: Request) {
-  if(request.headers.get("origin")!==new URL(request.url).origin) return Response.json({error:"Invalid origin"},{status:403});
+  if(!sameOrigin(request)) return Response.json({error:"Invalid origin"},{status:403});
   const db=await createClient(); const {data:{user}}=await db.auth.getUser();
   if(!user) return Response.json({error:"Sign in to upload."},{status:401});
   if(!process.env.OPENAI_API_KEY || !process.env.SUPABASE_SERVICE_ROLE_KEY) return Response.json({error:"The caption studio is awaiting server configuration. Please try again later."},{status:503});

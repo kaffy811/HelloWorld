@@ -1,6 +1,7 @@
+import { sameOrigin } from "@/lib/humor-validation";
 import { createClient } from "@/lib/supabase/server";
 export async function POST(request: Request) {
-  if (request.headers.get("origin") !== new URL(request.url).origin) return Response.json({error:"Invalid origin"},{status:403});
+  if (!sameOrigin(request)) return Response.json({error:"Invalid origin"},{status:403});
   const db = await createClient();
   const {data:{user}} = await db.auth.getUser();
   if (!user) return Response.json({error:"Sign in to vote."},{status:401});
