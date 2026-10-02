@@ -20,10 +20,6 @@ Vercel Authentication, Password Protection and Trusted IP protection observed of
 ## Verification
 PASS: ESLint; production Webpack build including TypeScript; tests/humor-validation.mjs tests signatures and malformed model output.
 PASS on live database, rollback-only two-user fixtures: anonymous vote/reservation denied; own vote succeeds; duplicate denied; impersonation denied; vote edit denied; client caption insert denied; other user's votes and unfinished images hidden; published captions visible; second user can rate same caption; all public tables have RLS.
-PASS: production HTTP handlers return 401 for anonymous vote/upload and 403 for cross-origin POST. Live database reservation, repeat-request limit and atomic four-caption publication verified with rollback fixtures.
 Pending: real Google sign-in callback on new deployment; real Storage upload/download/cleanup, both OpenAI calls, persisted generation and browser voting, due to missing server-only secrets. Do not claim those passed.
 
 Policy references: https://supabase.com/docs/guides/database/postgres/row-level-security and https://supabase.com/docs/guides/storage/security/access-control
-
-The origin guard compares browser Origin to the incoming Host header, allowing local IP hostnames and Vercel proxying while rejecting cross-site browser requests.
-OpenAI image input format verified against https://developers.openai.com/api/docs/guides/images-vision.

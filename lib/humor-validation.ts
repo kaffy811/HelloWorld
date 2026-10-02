@@ -9,9 +9,3 @@ export function captionsFrom(value: unknown): string[] {
   if (!Array.isArray(c) || c.length!==4 || c.some(x=>typeof x!=="string" || x.trim().length<1 || x.length>240) || new Set(c.map(x=>typeof x==="string"?x.trim():x)).size!==4) throw new Error("Invalid captions");
   return c.map(x=>x.trim());
 }
-
-export function sameOrigin(request: Request): boolean {
-  try { const origin = new URL(request.headers.get("origin") || "");
-    return ["https:","http:"].includes(origin.protocol) && origin.host === request.headers.get("host");
-  } catch { return false; }
-}
