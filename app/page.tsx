@@ -1,11 +1,147 @@
-import Image from "next/image";
+import { redirect } from "next/navigation";
+import { onboardingDestination } from "@/lib/onboarding";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { HumorStudio, VoteButtons } from "@/components/humor-studio";
-export const dynamic="force-dynamic";
-export default async function Home(){
- const db=await createClient();const {data:{user}}=await db.auth.getUser();
- const {data:images,error}=user?await db.from("humor_images").select("id,storage_path,description,humor_captions(id,content)").eq("status","ready").order("created_at",{ascending:false}).limit(24):{data:null,error:null};
- const {data:votes}=user?await db.from("humor_votes").select("caption_id,value").eq("user_id",user.id):{data:null};
- const photos=await Promise.all((images||[]).map(async i=>{const {data}=await db.storage.from("humor-images").createSignedUrl(i.storage_path,3600);return {...i,url:data?.signedUrl};}));
- return <><section className="humor-hero"><span className="eyebrow">THE INTERNET COULD USE A GOOD LAUGH</span><h1>Small moments.<br/><span>Big caption energy.</span></h1><p>Turn your camera roll into a comedy club. Make captions with AI, then tell us which ones actually land.</p><a className="button" href="#studio">Find your funny ↓</a><div className="hero-stamp" aria-hidden="true">ha<span>ha.</span><small>YOUR DAILY DOSE OF ABSURD</small></div></section><HumorStudio signedIn={!!user}/><section id="gallery"><div className="section-title"><div><span className="eyebrow">02 / THE LAUGH LAB</span><h2>The audience has the last word.</h2></div><span className="pill">One vote. Honest taste.</span></div><p>Four takes on every photo. Pick the punchlines that deserve an encore.</p>{!user?<div className="panel"><h3>The club is open. Come on in.</h3><p>Sign in to see member photos, create captions and cast your votes.</p><a className="text-link" href="/login">Join the laugh lab ↗</a></div>:error?<div className="panel" role="alert">The gallery is temporarily unavailable. Please try again later.</div>:!photos.length?<div className="panel"><h3>Every comedy club starts with an opening act.</h3><p>Upload the first photo and give everyone something to laugh about.</p></div>:<div className="humor-grid">{photos.map(i=><article className="humor-card panel" key={i.id}>{i.url?<Image unoptimized src={i.url} alt={i.description||"Member uploaded photo"} width={600} height={420}/>:<p>Photo temporarily unavailable.</p>}<div className="caption-list">{i.humor_captions.map((c,n)=><div className="caption-item" key={c.id}><span className="eyebrow">TAKE 0{n+1}</span><p>{c.content}</p><VoteButtons captionId={c.id} vote={votes?.find(v=>v.caption_id===c.id)?.value??null}/></div>)}</div></article>)}</div>}</section></>;
+export const dynamic = "force-dynamic";
+type Company = {
+  ticker: string;
+  name: string;
+  sector: string;
+  summary: string;
+  learning_question: string;
+  source_url: string;
+};
+export default async function Home() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("display_name,first_name,last_name,onboarding_completed_at")
+      .eq("id", user.id)
+      .single();
+    if (profileError || !profile) throw new Error("Profile unavailable");
+    const destination = onboardingDestination(profile);
+    if (destination !== "/") redirect(destination);
+  }
+  const { data, error } = await supabase
+    .from("companies")
+    .select("ticker,name,sector,summary,learning_question,source_url")
+    .order("name");
+  const companies = (data ?? []) as Company[];
+  return (
+    <>
+      <section className="hero">
+        <div>
+          <span className="eyebrow">LESS JARGON. MORE UNDERSTANDING.</span>
+          <h1>
+            Know the company.
+            <br />
+            <span>Then form your view.</span>
+          </h1>
+          <p>
+            A gentle starting point for US stocks. Discover how a business
+            works, learn what to ask, and build understanding at your own pace.
+          </p>
+          <a className="button" href="#companies">
+            Explore companies <span>↓</span>
+          </a>
+          <Link className="text-link" href="/notebook">
+            Your learning space ↗
+          </Link>
+        </div>
+        <aside className="guide">
+          <span className="eyebrow">YOUR FIRST THREE QUESTIONS</span>
+          <ol>
+            <li>
+              <span>01</span>
+              <div>
+                <strong>How does it make money?</strong>
+                <p>Start with the business, not the stock price.</p>
+              </div>
+            </li>
+            <li>
+              <span>02</span>
+              <div>
+                <strong>What should I look into?</strong>
+                <p>A useful question is better than a quick verdict.</p>
+              </div>
+            </li>
+            <li>
+              <span>03</span>
+              <div>
+                <strong>What am I still missing?</strong>
+                <p>Keep uncertainty part of your understanding.</p>
+              </div>
+            </li>
+          </ol>
+          <div className="guide-note">
+            Small steps. A more informed perspective.
+          </div>
+        </aside>
+      </section>
+      <section id="companies">
+        <div className="section-title">
+          <div>
+            <span className="eyebrow">START WITH A BUSINESS YOU KNOW</span>
+            <h2>Company explorer</h2>
+          </div>
+          <span className="pill">{companies.length} learning examples</span>
+        </div>
+        <p className="section-description">
+          Plain-English introductions, saved in our database. These examples are
+          not a stock ranking.
+        </p>
+        {error ? (
+          <div className="panel notice" role="alert">
+            <h3>Company data is temporarily unavailable</h3>
+            <p>
+              Please try again later. We do not replace missing database results
+              with invented data.
+            </p>
+          </div>
+        ) : companies.length === 0 ? (
+          <div className="panel">
+            <h3>No companies yet</h3>
+            <p>Learning examples will appear here once they have been added.</p>
+          </div>
+        ) : (
+          <div className="cards">
+            {companies.map((c) => (
+              <article className="company panel" key={c.ticker}>
+                <div className="card-top">
+                  <span className="ticker">{c.ticker}</span>
+                  <span className="small">{c.sector}</span>
+                </div>
+                <h3>{c.name}</h3>
+                <p>{c.summary}</p>
+                <div className="question">
+                  <span className="eyebrow">A QUESTION TO EXPLORE</span>
+                  <p>{c.learning_question}</p>
+                </div>
+                <a
+                  className="source"
+                  href={c.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Visit company source ↗
+                </a>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+      <section className="bottom-note">
+        <h2>Understanding comes before a decision.</h2>
+        <p>
+          This first release introduces businesses. Financial analysis,
+          multilingual explanations and AI research are planned for later
+          releases.
+        </p>
+      </section>
+    </>
+  );
 }

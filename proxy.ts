@@ -28,6 +28,5 @@ export const config = {
     "/notebook/:path*",
     "/auth/:path*",
     "/login",
-    "/api/humor/:path*",
   ],
 };
