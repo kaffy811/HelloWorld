@@ -818,5 +818,7 @@
   "Automatic checks every 10 minutes. News delivery may be delayed by the source.": "每十分钟自动检查。新闻源自身可能存在延迟。",
   "News is checked every 10 minutes when scheduled updates are enabled; source delivery may be delayed.": "启用定时更新后，每十分钟检查新闻；来源本身可能存在延迟。",
   "Coverage: SEC company filings, Federal Reserve policy, BLS and BEA economic releases, and Benzinga company-news summaries via Alpaca. Filter by source to compare coverage.": "来源包括 SEC 公司公告、美联储政策、BLS 与 BEA 经济发布，以及通过 Alpaca 获取的 Benzinga 公司新闻摘要。可以按来源筛选。",
-  "Benzinga via Alpaca": "Benzinga（通过 Alpaca）"
+  "Benzinga via Alpaca": "Benzinga（通过 Alpaca）",
+  "News & filings": "新闻与公告",
+  "Company news summaries and SEC filings, with publication dates and source links.": "公司新闻摘要与 SEC 公告，附发布时间和来源链接。"
 }

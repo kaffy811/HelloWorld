@@ -31,9 +31,9 @@ export default async function CompanyNews({
       <section className="content-section">
         <div className="section-title">
           <h2><T text="Company updates"/></h2>
-          <span className="pill"><T text="SEC filings"/></span>
+          <span className="pill"><T text="News & filings"/></span>
         </div>
-        <p className="section-description"><T text="Original company reports and announcements, with publication dates and source links."/></p>
+        <p className="section-description"><T text="Company news summaries and SEC filings, with publication dates and source links."/></p>
         {feed.data.length ? (
           <ArticleList items={feed.data} />
         ) : (
