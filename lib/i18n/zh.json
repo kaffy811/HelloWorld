@@ -811,5 +811,12 @@
   "The update could not finish. Please try again later.": "更新未能完成，请稍后重试。",
   "News was recently checked. Saved news is ready to read.": "资讯刚刚检查过，可以阅读已保存的资讯。",
   "The answer could not pass the source check. Try a more specific question; no unverified answer was saved.": "回答未通过来源校验，请尝试更具体的问题。未经验证的回答没有保存为生成内容。",
-  "Loading conversation…": "正在加载聊天记录…"
+  "Loading conversation…": "正在加载聊天记录…",
+  "Source": "来源",
+  "All sources": "全部来源",
+  "Checking news sources…": "正在检查新闻来源…",
+  "Automatic checks every 10 minutes. News delivery may be delayed by the source.": "每十分钟自动检查。新闻源自身可能存在延迟。",
+  "News is checked every 10 minutes when scheduled updates are enabled; source delivery may be delayed.": "启用定时更新后，每十分钟检查新闻；来源本身可能存在延迟。",
+  "Coverage: SEC company filings, Federal Reserve policy, BLS and BEA economic releases, and Benzinga company-news summaries via Alpaca. Filter by source to compare coverage.": "来源包括 SEC 公司公告、美联储政策、BLS 与 BEA 经济发布，以及通过 Alpaca 获取的 Benzinga 公司新闻摘要。可以按来源筛选。",
+  "Benzinga via Alpaca": "Benzinga（通过 Alpaca）"
 }

@@ -13,7 +13,7 @@ export function priceFor(data: StockData[], ticker: string) {
     ?.payload as Price | undefined;
 }
 export const articles = cache(
-  async (ticker?: string, category?: string, page = 1, filters?: {topic?:string;sector?:string;q?:string;start?:string|null;end?:string|null}) => {
+  async (ticker?: string, category?: string, page = 1, filters?: {source?:string;topic?:string;sector?:string;q?:string;start?:string|null;end?:string|null}) => {
     const s = await createClient();
     let q = s
       .from("market_articles")
@@ -24,6 +24,7 @@ export const articles = cache(
     if (category && ["market", "industry", "company"].includes(category))
       q = q.eq("category", category);
     if(category === "policy") q=q.in("topic",["rates","regulation"]);
+    if(filters?.source && filters.source!=="all") q=q.eq("source",filters.source);
     if(filters?.topic && filters.topic!=="all") q=q.eq("topic",filters.topic);
     if(filters?.sector && filters.sector!=="all") q=q.eq("sector",filters.sector);
     if(filters?.q) q=q.ilike("title","%"+filters.q+"%");

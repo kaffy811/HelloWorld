@@ -1,8 +1,8 @@
-name: Official US news refresh
+name: US multi-source news refresh
 on:
   workflow_dispatch:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '3,13,23,33,43,53 * * * *'
 permissions:
   contents: read
 concurrency:
@@ -12,16 +12,15 @@ jobs:
   news:
     if: github.event_name == 'workflow_dispatch' || vars.ENABLE_NEWS_SCHEDULE == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 3
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-      - run: npm ci
-      - run: npm run sync:data -- --news-only
+      # Runner can trigger only the bounded news import, not access the database.
+      - name: Refresh published sources
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
-          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          NEWS_SYNC_TOKEN: ${{ secrets.NEWS_SYNC_TOKEN }}
+        run: |
+          test -n "$NEWS_SYNC_TOKEN"
+          curl --fail-with-body --silent --show-error --max-time 70 \
+            --request POST \
+            --header "Authorization: Bearer $NEWS_SYNC_TOKEN" \
+            https://hello-world-gold-eight.vercel.app/api/news/scheduled

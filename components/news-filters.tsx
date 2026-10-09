@@ -5,13 +5,15 @@ import {T} from "@/components/language-provider";
 
 import {useState} from 'react';
 import Link from 'next/link';
+import {newsSources} from '@/lib/market/news-sources.mjs';
 import {topics,sectors} from '@/lib/market/exploration.mjs';
-type Filters={category:string;topic:string;sector:string;ticker:string;q:string;period:string;from:string;to:string};
+type Filters={category:string;source:string;topic:string;sector:string;ticker:string;q:string;period:string;from:string;to:string};
 export function NewsFilters({filters,companies}:{filters:Filters;companies:{ticker:string;name:string}[]}){
  const {t:ui}=useLanguage();
  const [period,setPeriod]=useState(filters.period);
  const allowed=filters.category==='policy'?['all','rates','regulation']:filters.category==='company'?['all','earnings','corporate','other']:filters.category==='industry'?['all','regulation','other']:['all',...topics.map(([k])=>k)];
  return <form action="/news" className="panel news-filter-panel"><input type="hidden" name="category" value={filters.category}/><div className="news-filter-grid">
+ <label><T text="Source"/><select name="source" defaultValue={filters.source}>{newsSources.map(([k,v])=><option key={k} value={k}>{ui(v)}</option>)}</select></label>
  <label><T text="Topic"/><select name="topic" defaultValue={filters.topic}>{topics.filter(([key])=>allowed.includes(key)).map(([k,v])=><option key={k} value={k}>{ui(v)}</option>)}</select></label>
  <label><T text="Time range"/><select name="period" value={period} onChange={e=>setPeriod(e.target.value)}>{[['all','Any time'],['today','Today (New York)'],['7d','Past 7 days'],['30d','Past 30 days'],['custom','Custom dates']].map(([k,v])=><option key={k} value={k}>{ui(v)}</option>)}</select></label>
  <label><T text="Sector"/><select name="sector" defaultValue={filters.sector}>{sectors.map(([k,v])=><option key={k} value={k}>{ui(v)}</option>)}</select></label>

@@ -201,3 +201,20 @@ test("re-fetching unchanged facts does not invalidate the AI evidence hash", asy
     );
   assert.equal(a.evidence_hash, b.evidence_hash);
 });
+
+
+test("BEA RSS accepts only official links, decodes entities and preserves release time", () => {
+ const xml=`<rss><channel><item><title>GDP &amp; Income</title><link>https://www.bea.gov/news/2026/gdp</link><pubDate>Tue, 06 Oct 2026 08:30:00 EDT</pubDate><description><![CDATA[<p>Growth &#x2014; summary.</p>]]></description></item><item><title>Bad host</title><link>https://www.bea.gov.evil.test/news</link><pubDate>Tue, 06 Oct 2026 08:30:00 EDT</pubDate></item></channel></rss>`;
+ const rows=parseFeed(xml,'BEA',now);assert.equal(rows.length,1);assert.equal(rows[0].published_at,'2026-10-06T12:30:00.000Z');assert.equal(rows[0].excerpt,'Growth — summary.');assert.equal(rows[0].collected_at,now.toISOString());assert.throws(()=>parseFeed(xml,'unknown',now));
+});
+test("Alpaca news stores summaries only, matches configured symbols and deduplicates provider IDs", async () => {
+ const {normalizeAlpacaNews,alpacaNewsUrl}=await import('../lib/market/news-sources.mjs');
+ const n={id:42,source:'benzinga',headline:'Apple &amp; Microsoft earnings',url:'https://www.benzinga.com/news/42?utm_source=api',created_at:'2026-10-08T15:00:00Z',symbols:['AAPL','MSFT','TSLA','AAPL'],summary:'<p>Public summary.</p>',content:'Never store this full body'};
+ const rows=normalizeAlpacaNews({news:[n,{...n,summary:'Updated summary.'},{...n,id:43,url:'https://benzinga.com.evil.test/'},{...n,id:44,created_at:'2027-01-01T00:00:00Z'},{...n,id:45,symbols:['TSLA']},{...n,id:46,source:'unknown'}]},[{ticker:'AAPL'},{ticker:'MSFT'}],now);
+ assert.equal(rows.length,1);assert.equal(rows[0].source_key,'alpaca:42');assert.deepEqual(rows[0].tickers,['AAPL','MSFT']);assert.equal(rows[0].excerpt,'Updated summary.');assert.equal(rows[0].source_url,'https://www.benzinga.com/news/42');assert.equal(rows[0].content,undefined);assert.equal(rows[0].published_at,n.created_at.replace('Z','.000Z'));
+ const u=new URL(alpacaNewsUrl(['AAPL','COST'],now,'next'));assert.equal(u.searchParams.get('include_content'),'false');assert.equal(u.searchParams.get('page_token'),'next');assert.equal(u.searchParams.get('symbols'),'AAPL,COST');assert.throws(()=>normalizeAlpacaNews({},[],now));
+});
+test("scheduled news requires a configured exact bearer token",async()=>{
+ const {scheduledAuthorized}=await import('../lib/news/scheduled.mjs');const secret='a'.repeat(64);
+ assert.equal(scheduledAuthorized('Bearer '+secret,secret),true);for(const input of [null,'','Bearer wrong','bearer '+secret,'Bearer '+secret+'a'])assert.equal(scheduledAuthorized(input,secret),false);assert.equal(scheduledAuthorized('Bearer a','a'),false);
+});

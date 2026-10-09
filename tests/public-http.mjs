@@ -87,3 +87,5 @@ const returnPreparation=await fetch(origin+'/auth/return',{method:'POST',headers
 const preparedCookie=returnPreparation.headers.get('set-cookie').split(';')[0];
 const backgroundHome=await fetch(origin+'/',{headers:{Cookie:preparedCookie}});
 assert.ok(!/learning_return=/i.test(backgroundHome.headers.get('set-cookie')||''),'a homepage request must not erase an in-progress OAuth return path');
+
+for(const authorization of ['', 'Bearer invalid']){const r=await fetch(origin+'/api/news/scheduled',{method:'POST',headers:{Authorization:authorization}});assert.equal(r.status,401,'scheduled importer must reject missing or forged token');}

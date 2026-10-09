@@ -37,6 +37,12 @@ try {
  grant all on all tables in schema storage to service_role;`);
   for (const file of (await fs.readdir("supabase/migrations")).sort())
     await db.exec(await fs.readFile("supabase/migrations/" + file, "utf8"));
+  await check("additional news sources preserve public read and server-only write with matched hosts",async()=>{
+   await role("service_role");await db.query("insert into public.market_articles(source_key,title,source,source_url,category,published_at) values('bea:test','GDP','BEA','https://www.bea.gov/news/2026/gdp','market',now()),('alpaca:42','Apple news','Benzinga via Alpaca','https://www.benzinga.com/news/42','company',now())");
+   await denied("insert into public.market_articles(source_key,title,source,source_url,category,published_at) values('bea:bad','Bad','BEA','https://www.benzinga.com/news/42','market',now())");
+   for(const reader of ['anon','authenticated']){await role(reader);assert.equal((await db.query("select id from public.market_articles")).rows.length,2);await denied("insert into public.market_articles(source_key,title,source,source_url,category,published_at) values('forged','Fake','BEA','https://www.bea.gov/news/forged','market',now())");}
+   await db.exec('reset role;');
+  });
   await check(
     "repeated migration is rejected before changing the existing schema",
     async () => {

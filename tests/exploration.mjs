@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {minuteBars,chartSessions,aggregateBars,normalizeNewsFilters,validateNote} from '../lib/market/exploration.mjs';
+import {minuteBars,chartSessions,aggregateBars,classifyArticle,normalizeNewsFilters,validateNote} from '../lib/market/exploration.mjs';
 import {suggestedConcepts} from '../lib/market/learning-path.mjs';
 const raw=(t,o=10,c=11)=>({t,o,h:12,l:9,c,v:100});
 test('intraday data rejects future/invalid OHLC and after-hours; preserves individual minutes',()=>{
@@ -22,4 +22,11 @@ test('daily library suggestions exclude saved concepts and related known terms',
 });
 test('private notes bound title/body and discard client-supplied owner or provenance',()=>{
  assert.deepEqual(validateNote({title:' My note ',body:' My own thoughts ',user_id:'forged'}),{title:'My note',body:'My own thoughts'});assert.throws(()=>validateNote({title:'a',body:'x'.repeat(12001)}));assert.throws(()=>validateNote(null));
+});
+
+
+test('new sources are filterable and retain useful topics and mixed-company scope',()=>{
+ assert.equal(normalizeNewsFilters({source:'BEA'}).source,'BEA');assert.equal(normalizeNewsFilters({source:'Benzinga via Alpaca'}).source,'Benzinga via Alpaca');assert.equal(normalizeNewsFilters({source:'forged'}).source,'all');
+ assert.equal(classifyArticle({source:'BEA',title:'Personal Income and Outlays'}).topic,'inflation');assert.equal(classifyArticle({source:'BEA',title:'Gross Domestic Product'}).topic,'jobs');
+ assert.deepEqual(classifyArticle({source:'Benzinga via Alpaca',title:'Apple earnings',tickers:['AAPL']}),{topic:'earnings',sector:'technology'});assert.equal(classifyArticle({source:'Benzinga via Alpaca',title:'Company events',tickers:['MSFT','SBUX']}).sector,'all');
 });

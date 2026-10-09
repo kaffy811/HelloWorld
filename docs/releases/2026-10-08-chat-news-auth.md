@@ -17,4 +17,4 @@ Browser acceptance: article explanation and follow-up; emoji rating; history rel
 
 ## Limits
 
-The BLS RSS source may return HTTP 403 from the hosting network. Its saved feed stays visible; the interface reports it separately. Scheduled ingestion is not enabled. Provider outages and configured budgets still apply to AI generation; stored history remains readable.
+The BLS RSS source may return HTTP 403 from the hosting network. Its saved feed stays visible; the interface reports it separately. Scheduled ingestion was subsequently added in [BEA and Alpaca news](2026-10-08-bea-alpaca-news.md). Provider outages and configured budgets still apply to AI generation; stored history remains readable.
