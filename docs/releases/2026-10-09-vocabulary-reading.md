@@ -1,6 +1,6 @@
 # Financial vocabulary and original reading
 
-Home has one search purpose: explaining financial words or sentences (160 characters maximum). Exact bilingual glossary/topic matches are immediate and do not consume a generation allowance. Unknown terms require a signed-in POST; answers, versioned prompts, usage and ratings use the existing private generation ledger. Nothing is automatically bookmarked. Generated terminology is conceptual, not verified company or live market evidence.
+Home has one search purpose: explaining financial words or sentences (160 characters maximum). Exact bilingual glossary/topic matches are immediate and do not consume a generation allowance. Unknown terms require a signed-in POST; answers, versioned prompts, usage and ratings use the existing private generation ledger. Nothing is automatically bookmarked. Saved glossary cards retain the selected original wording, while their reviewed explanation follows the system language; the server verifies wording against the canonical glossary entry. Generated terminology is conceptual, not verified company or live market evidence.
 
 All saved words, selected sentences and starred daily explanations use `knowledge_bookmarks`. Historical lesson stars are migrated once into Terms; original outputs/prompts/votes remain intact. The migration marker prevents a repeated migration from restoring a subsequently removed favourite. Notebook contains Terms and My notes; conversations stay in Chat.
 
@@ -12,4 +12,4 @@ Long originals are paginated, with selectable text on every part. AI source reso
 
 Reproduce: apply migrations in filename order; configure the existing Supabase/Gemini environment; run npm test, npm run test:db, npm run lint, npm run build. Start the app and run TEST_ORIGIN=<origin> npm run test:http. For a separate local test server use its own matching APP_ORIGIN.
 
-Validation: 81 unit scenarios, 37 PostgreSQL/RLS scenarios, lint and production build. A disposable authenticated test account completed actual six-word Gemini generation, unknown-term generation, save/reopen in Terms, five-level rating, prompt storage and repeated cache reads. The synthetic account was removed; billed generation usage remains recorded. Official FOMC reading was exercised in-page; BEA parsing retrieved its available original text.
+Validation: 82 unit scenarios, 37 PostgreSQL/RLS scenarios, lint and production build. A disposable authenticated test account completed actual six-word Gemini generation, unknown-term generation, save/reopen in Terms, five-level rating, prompt storage and repeated cache reads. The synthetic account was removed; billed generation usage remains recorded. Official FOMC reading was exercised in-page; BEA parsing retrieved its available original text.

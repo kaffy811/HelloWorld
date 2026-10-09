@@ -645,3 +645,6 @@ footer{padding-right:104px}.feedback-confirmation h2{font-size:36px;line-height:
 .original-body { font-size: 18px; line-height: 1.85; overflow-wrap: anywhere; }
 .original-body p { margin-bottom: 24px; }
 @media(max-width:600px){ .vocabulary-list {padding:0 20px;} .original-body {font-size:16px;} }
+
+.vocabulary-search .search-bar .button { white-space: nowrap; flex-shrink: 0; }
+.vocabulary-search .search-bar input { min-width: 0; }

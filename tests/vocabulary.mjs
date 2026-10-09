@@ -1,5 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {lookupVocabulary,vocabularyQuery,vocabularyPrompt} from '../lib/ai/vocabulary.mjs';
+import {bookmarkedVocabularyText} from '../lib/market/vocabulary.mjs';
 import {validateVocabulary} from '../lib/ai/general.mjs';
 import {dailyCandidates} from '../lib/ai/topics.mjs';
 import {validOriginalUrl,originalHtmlText,readingPassage,originalPage,readingParagraphs} from '../lib/news/original-text.mjs';
@@ -12,3 +13,5 @@ test('selections in later original pages remain in bounded AI evidence; paginati
 test('AI vocabulary answers enforce a short explanation independently of chat limits',()=>{assert.throws(()=>validateVocabulary({title:'Term',answer:'word '.repeat(201),citations:[]},'en'));assert.doesNotThrow(()=>validateVocabulary({title:'Liquidity',answer:'How easily something can be converted into cash.',citations:[]},'en'));});
 
 test('BEA reading omits article navigation and keeps the main release and explanatory notes',()=>{const html='<article><h2>Related materials</h2><div class="field field--name-body field--item"><p>Original &ldquo;release&rdquo;.</p><div><p>Nested figure.</p></div></div><p>Contact telephone</p><div class="field field--name-field-additional-information"><p>Explanatory notes.</p></div></article>';const text=originalHtmlText(html,'BEA');assert.match(text,/Original “release”/);assert.match(text,/Nested figure/);assert.match(text,/Explanatory notes/);assert.doesNotMatch(text,/Related materials|Contact telephone/);});
+
+test('a saved glossary card keeps selected English wording with a Chinese explanation, while rejecting forged text',()=>{const entry=lookupVocabulary('Operating income','zh-Hans');assert.equal(bookmarkedVocabularyText('Operating income',entry,'zh-Hans'),'Operating income');assert.match(entry.definition,/利息/);assert.throws(()=>bookmarkedVocabularyText('Unrelated instructions',entry,'zh-Hans'));assert.equal(bookmarkedVocabularyText(undefined,entry,'zh-Hans'),'营业利润');});
