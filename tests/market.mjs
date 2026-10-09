@@ -204,8 +204,8 @@ test("re-fetching unchanged facts does not invalidate the AI evidence hash", asy
 
 
 test("BEA RSS accepts only official links, decodes entities and preserves release time", () => {
- const xml=`<rss><channel><item><title>GDP &amp; Income</title><link>https://www.bea.gov/news/2026/gdp</link><pubDate>Tue, 06 Oct 2026 08:30:00 EDT</pubDate><description><![CDATA[<p>Growth &#x2014; summary.</p>]]></description></item><item><title>Bad host</title><link>https://www.bea.gov.evil.test/news</link><pubDate>Tue, 06 Oct 2026 08:30:00 EDT</pubDate></item></channel></rss>`;
- const rows=parseFeed(xml,'BEA',now);assert.equal(rows.length,1);assert.equal(rows[0].published_at,'2026-10-06T12:30:00.000Z');assert.equal(rows[0].excerpt,'Growth — summary.');assert.equal(rows[0].collected_at,now.toISOString());assert.throws(()=>parseFeed(xml,'unknown',now));
+ const xml=`<rss><channel><item><title>GDP &amp; Income</title><link>https://www.bea.gov/news/2026/gdp</link><pubDate>Tue, 06 Oct 2026 08:30:00 EDT</pubDate><description><![CDATA[<p>Growth &#x2014; summary.</p>&lt;!-- Full Text --&gt;&lt;a href="https://www.bea.gov/news"&gt;Full Text&lt;/a&gt;]]></description></item><item><title>Bad host</title><link>https://www.bea.gov.evil.test/news</link><pubDate>Tue, 06 Oct 2026 08:30:00 EDT</pubDate></item></channel></rss>`;
+ const rows=parseFeed(xml,'BEA',now);assert.equal(rows.length,1);assert.equal(rows[0].published_at,'2026-10-06T12:30:00.000Z');assert.equal(rows[0].excerpt,'Growth — summary. Full Text');assert.equal(rows[0].collected_at,now.toISOString());assert.throws(()=>parseFeed(xml,'unknown',now));
 });
 test("Alpaca news stores summaries only, matches configured symbols and deduplicates provider IDs", async () => {
  const {normalizeAlpacaNews,alpacaNewsUrl}=await import('../lib/market/news-sources.mjs');

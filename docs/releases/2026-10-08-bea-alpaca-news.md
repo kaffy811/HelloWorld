@@ -22,6 +22,10 @@ Visitors with the News page open refresh visible results every minute; logged-in
 
 To disable scheduled ingestion, set the GitHub repository variable ENABLE_NEWS_SCHEDULE=false and the Vercel production variable to false, then redeploy. To rotate the trigger credential, update both secret stores together. Never commit .env.local or credentials.
 
+## Production verification
+
+The trigger workflow https://github.com/kaffy811/HelloWorld/actions/runs/37878409860 completed successfully. The Vercel server imported 292 source records in approximately ten seconds: BEA 40, SEC 72, Fed 30, Benzinga 150. BLS returned HTTP 403 on Vercel; its earlier row remains. The source-failure banner also reads the latest completed sync so automatic-job failures are visible.
+
 ## Acceptance
 
 npm test, npm run test:db, npm run lint, npm run build, and TEST_ORIGIN=https://hello-world-gold-eight.vercel.app npm run test:http. Database scenarios verify that new source URLs match their publishers and visitors cannot insert rows. HTTP checks reject missing/forged scheduled credentials. Validate actual BEA/Alpaca imports, source filters, stock News and an AI explanation on a saved summary; inspect the workflow run and source counts.

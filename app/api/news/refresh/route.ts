@@ -6,7 +6,14 @@ import {refreshStatus,refreshResult} from '@/lib/news/refresh-status.mjs';
 import {revalidatePath} from 'next/cache';
 export const maxDuration=60;
 async function status(){const {data,error}=await adminClient().from('news_refresh_gate').select('lease_until,last_started').eq('id',1).maybeSingle();if(error)throw new HttpError(503,'News refresh storage is unavailable.');return refreshStatus(data);}
-export async function GET(){try{await readerUser();const {data:latest}=await adminClient().from("market_articles").select("collected_at").order("collected_at",{ascending:false}).limit(1);return Response.json({...await status(),last_imported:latest?.[0]?.collected_at||null,scheduled:process.env.ENABLE_NEWS_SCHEDULE==='true'},{headers:{'Cache-Control':'private, no-store'}});}catch(e){return errorResponse(e);}}
+export async function GET(){try{
+ await readerUser();const admin=adminClient();
+ const [{data:latest},{data:runs}]=await Promise.all([
+  admin.from("market_articles").select("collected_at").order("collected_at",{ascending:false}).limit(1),
+  admin.from("data_sync_runs").select("report").not("finished_at","is",null).order("started_at",{ascending:false}).limit(1),
+ ]);
+ return Response.json({...await status(),last_imported:latest?.[0]?.collected_at||null,failed_sources:refreshResult(runs?.[0]?.report||{}).failed_sources,scheduled:process.env.ENABLE_NEWS_SCHEDULE==='true'},{headers:{'Cache-Control':'private, no-store'}});
+ }catch(e){return errorResponse(e);}}
 export async function POST(request:Request){try{
  await mutationUser(request);const admin=adminClient(),{data:claimed,error}=await admin.rpc('reserve_news_refresh');
  if(error)throw new HttpError(503,'News refresh storage is unavailable.');
