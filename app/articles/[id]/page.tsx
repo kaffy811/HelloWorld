@@ -1,19 +1,22 @@
 import {getTranslator} from "@/lib/i18n/server";
 
+import {articleOriginal} from '@/lib/news/original';
+import {originalPage,readingParagraphs} from '@/lib/news/original-text.mjs';
 import {T} from "@/components/language-provider";
 import { ArticleAssistant } from "@/components/article-assistant";
 import { TextSelectionHelper } from "@/components/text-selection-helper";
 import { concepts } from "@/lib/market/concepts.mjs";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { UUID } from "@/lib/news/validation.mjs";
 import { easternDate } from "@/lib/news/data";
 import type { Article } from "@/lib/market/types";
 export default async function ArticleDetail({
-  params,
+  params,searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{part?:string}>;
 }) {
  const {t:ui}=await getTranslator();
   const { id } = await params;
@@ -27,17 +30,7 @@ export default async function ArticleDetail({
   if (error) throw new Error("News is temporarily unavailable.");
   if (!data) notFound();
   const a = data as Article;
-  if (a.sec_news_id) {
-    const { data: ai } = await s
-      .from("analysis_versions")
-      .select("id")
-      .eq("news_id", a.sec_news_id)
-      .eq("kind", "news")
-      .eq("is_public", true)
-      .order("created_at", { ascending: false })
-      .limit(1);
-    if (ai?.[0]) redirect("/news/" + ai[0].id);
-  }
+  const original=await articleOriginal(a),part=original?originalPage(original.text,Number((await searchParams).part)||1):null;
   const {data:{user}}=await s.auth.getUser();
   return (
     <>
@@ -53,10 +46,10 @@ export default async function ArticleDetail({
         <h1>{a.title}</h1>
         <time className="small"><T text="Published "/>{easternDate(a.published_at)}</time>
         <ArticleAssistant source={{kind:"article",id}} title={a.title} signedIn={Boolean(user)} returnPath={"/articles/"+id}/>
-        <p className="lead">{a.excerpt}</p>
+        {original&&part?<section className="original-reading"><div className="original-reading-heading"><span className="eyebrow"><T text="ORIGINAL SOURCE TEXT"/></span><p className="small"><T text="Select an unfamiliar word or sentence to explain it and save it to Terms."/></p></div><div className="original-body">{readingParagraphs(part.text).map((paragraph:string,i:number)=><p key={i}>{paragraph}</p>)}</div>{part.total>1&&<nav className="history-pagination" aria-label={ui('Original text pages')}>{part.page>1&&<Link href={'/articles/'+id+'?part='+(part.page-1)}><T text="← Previous"/></Link>}<span><T text="Page "/>{part.page}<T text=" of "/>{part.total}</span>{part.page<part.total&&<Link href={'/articles/'+id+'?part='+(part.page+1)}><T text="Next →"/></Link>}</nav>}</section>:<><p className="lead">{a.excerpt}</p><p className="small"><T text="Summary available here. The original article can be read on the publisher’s website."/></p></>}
         <a
           className="button"
-          href={a.source_url}
+          href={original?.url||a.source_url}
           target="_blank"
           rel="noopener noreferrer"
         ><T text="Read the original report ↗"/></a>
@@ -66,7 +59,7 @@ export default async function ArticleDetail({
               {t}<T text=" · Overview →"/></Link>
           ))}
         </div>
-        <p className="small"><T text="Source excerpt · Read the original report for the full article."/></p>
+
       </article>
       <TextSelectionHelper source={{kind:"article",id}} choices={concepts.map(c=>({text:c.term,definition:c.definition,selection:{concept:c.key},provenance:"Learning library"}))} signedIn={Boolean(user)} returnPath={"/articles/"+id}/>
     </>

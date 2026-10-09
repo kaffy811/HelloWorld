@@ -108,7 +108,7 @@ export function ArticleList({ items }: { items: Article[] }) {
           <h3>
             <Link
               href={
-                a.analysis_id ? `/news/${a.analysis_id}` : `/articles/${a.id}`
+                `/articles/${a.id}`
               }
             >
               {a.title}
@@ -126,7 +126,7 @@ export function ArticleList({ items }: { items: Article[] }) {
             <Link
               className="source"
               href={
-                a.analysis_id ? `/news/${a.analysis_id}` : `/articles/${a.id}`
+                `/articles/${a.id}`
               }
             >
               {a.analysis_id ? <T text="Read with AI context →"/> : <T text="Read update →"/>}

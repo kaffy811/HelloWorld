@@ -529,6 +529,24 @@ try {
     assert.equal((await db.query('select id from public.product_feedback')).rows.length,5);
     await db.exec('reset role;');
   });
+  await check('six-word upgrade preserves old outputs, rejects duplicate replacement, and merged favourites remain owner-only',async()=>{
+    await role('service_role');const old=(await db.query("select run_id from public.ai_daily_sets where owner_id=$1 and day=current_date and language='en'",[u1])).rows[0].run_id;
+    const run=(await db.query("insert into public.generation_runs(owner_id,kind,dedupe_key,prompt) values($1,'daily','six-upgrade','{}') returning id",[u1])).rows[0].id;
+    const outputs=Array.from({length:6},(_,slot)=>({kind:'lesson',slot,topic_key:'six-'+slot,content:{title:'Six word '+slot,answer:'A short financial explanation.'},source_snapshot:{},source_url:'/learn',language:'en'}));
+    assert.equal((await db.query("select * from public.complete_reader_generation($1,$2,'{}',null,null,current_date)",[run,JSON.stringify(outputs)])).rows.length,6);
+    assert.equal((await db.query('select count(*) n from public.ai_outputs where run_id=$1',[old])).rows[0].n,5);
+    assert.equal((await db.query("select item_count from public.ai_daily_sets where owner_id=$1 and language='en'",[u1])).rows[0].item_count,6);
+    const repeat=(await db.query("insert into public.generation_runs(owner_id,kind,dedupe_key,prompt) values($1,'daily','six-repeat','{}') returning id",[u1])).rows[0].id;
+    await denied("select * from public.complete_reader_generation($1,$2,'{}',null,null,current_date)",[repeat,JSON.stringify(outputs)]);
+    assert.equal((await db.query('select count(*) n from public.ai_outputs where run_id=$1',[repeat])).rows[0].n,0);
+    const output=(await db.query('select id from public.ai_outputs where run_id=$1 order by slot limit 1',[run])).rows[0].id;
+    await db.query('insert into public.ai_lesson_saves(owner_id,output_id) values($1,$2)',[u1,output]);await db.exec('reset role;');
+    await db.exec(await fs.readFile('supabase/migrations/202610090010_six_words_terms.sql','utf8'));
+    await role('authenticated',u1);assert.equal((await db.query('select text from public.knowledge_bookmarks where ai_output_id=$1',[output])).rows[0].text,'Six word 0');
+    await role('authenticated',u1);await db.query('delete from public.knowledge_bookmarks where ai_output_id=$1',[output]);await db.exec('reset role;');await db.exec(await fs.readFile('supabase/migrations/202610090010_six_words_terms.sql','utf8'));await role('authenticated',u1);assert.equal((await db.query('select id from public.knowledge_bookmarks where ai_output_id=$1',[output])).rows.length,0);
+    await role('authenticated',u2);assert.equal((await db.query('select id from public.knowledge_bookmarks where ai_output_id=$1',[output])).rows.length,0);
+    await denied("select * from public.complete_reader_generation($1,$2,'{}',null,null,current_date)",[repeat,JSON.stringify(outputs)]);await db.exec('reset role;');
+  });
   console.log(
     `PASS: ${passed} PostgreSQL migration and RLS scenarios. Production database was not touched.`,
   );

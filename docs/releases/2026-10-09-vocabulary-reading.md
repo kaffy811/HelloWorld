@@ -1,0 +1,15 @@
+# Financial vocabulary and original reading
+
+Home has one search purpose: explaining financial words or sentences (160 characters maximum). Exact bilingual glossary/topic matches are immediate and do not consume a generation allowance. Unknown terms require a signed-in POST; answers, versioned prompts, usage and ratings use the existing private generation ledger. Nothing is automatically bookmarked. Generated terminology is conceptual, not verified company or live market evidence.
+
+All saved words, selected sentences and starred daily explanations use `knowledge_bookmarks`. Historical lesson stars are migrated once into Terms; original outputs/prompts/votes remain intact. The migration marker prevents a repeated migration from restoring a subsequently removed favourite. Notebook contains Terms and My notes; conversations stay in Chat.
+
+Daily generation selects six supported topics and excludes saved topics and recently presented topics from earlier days. One owner/day/language set is reused. `us-daily-v2-six` changes cache identity. Migration 202610090010 allows rolling compatibility with five-item writers and atomically upgrades the active pointer to six; historical outputs are never overwritten. A finite curated library can run out of eligible topics; show a review message rather than inventing unsupported topics. Generation remains lazy on the first daily visit, subject to configured budgets/provider availability.
+
+News no longer exposes a source filter (legacy source parameters are ignored); attribution remains on each report. Official Federal Reserve, BEA and BLS HTML is fetched only from allowlisted HTTPS paths, without redirects, with timeout/size bounds and an hourly cache. Only sanitized plain text is rendered. SEC originals use the already cached filing documents; uncached or unreachable originals fall back to clearly marked summaries and source links. Commercial Benzinga articles continue to show provider summaries: full republication rights have not been confirmed.
+
+Long originals are paginated, with selectable text on every part. AI source resolution uses the same parser and retrieves a bounded passage around the selected text, including text beyond the first page. Context, quotes, provenance and factual validation remain separate; no arbitrary URL fetching or original HTML injection.
+
+Reproduce: apply migrations in filename order; configure the existing Supabase/Gemini environment; run npm test, npm run test:db, npm run lint, npm run build. Start the app and run TEST_ORIGIN=<origin> npm run test:http. For a separate local test server use its own matching APP_ORIGIN.
+
+Validation: 80 unit scenarios, 37 PostgreSQL/RLS scenarios, lint and production build. A disposable authenticated test account completed actual six-word Gemini generation, unknown-term generation, save/reopen in Terms, five-level rating, prompt storage and repeated cache reads. The synthetic account was removed; billed generation usage remains recorded. Official FOMC reading was exercised in-page; BEA parsing retrieved its available original text.

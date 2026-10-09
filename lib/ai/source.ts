@@ -7,7 +7,8 @@ import {readingNotes} from '@/lib/market/learning-path.mjs';
 import {getLanguage} from '@/lib/i18n/server';
 import {translate} from '@/lib/i18n/translate.mjs';
 import {createHash} from 'node:crypto';
-import {publicArticleText} from '@/lib/news/public-article.mjs';
+import {articleOriginal} from '@/lib/news/original';
+import {readingPassage} from '@/lib/news/original-text.mjs';
 import {enrichSource} from './context';
 import type {ReaderSource,SourceSnapshot} from './types';
 function strings(value:unknown):string[]{if(typeof value==='string')return [value];if(Array.isArray(value))return value.flatMap(strings);if(value&&typeof value==='object')return Object.entries(value).filter(([k])=>k!=='evidence_ids'&&k!=='sentiment').flatMap(([,v])=>strings(v));return [];}
@@ -33,7 +34,7 @@ export async function resolveSource(s:SupabaseClient,input:ReaderSource,query=''
    // Existing AI prose is context to explain, never upgraded to primary factual evidence.
   }else if(input.kind==='article'){
    const {data:a}=await s.from('market_articles').select('id,title,excerpt,source,source_url,tickers,published_at').eq('id',input.id).maybeSingle();if(!a)throw new HttpError(404,'Article unavailable.');
-   title=a.title;read=[a.title,a.excerpt||''].join('\n\n');url='/articles/'+a.id;ticker=a.tickers?.[0]||null;scope='Available source title and excerpt only; published '+a.published_at;const original=a.source==='Federal Reserve'?await publicArticleText(a.source_url):null;if(original){read=a.title+'\n\n'+original.text;scope=(original.kind==='minutes'?'Retrieved selected passages from the linked official FOMC minutes':'Retrieved original press release excerpt')+'; published '+a.published_at+'. This is selected text, not the full document in model context.';}evidence=[{id:'source',label:a.source+(original?.kind==='minutes'?' meeting minutes — selected passages':' excerpt'),text:read,url:original?.url||a.source_url}];
+   title=a.title;read=[a.title,a.excerpt||''].join('\n\n');url='/articles/'+a.id;ticker=a.tickers?.[0]||null;scope='Available source title and excerpt only; published '+a.published_at;const original=await articleOriginal(a);if(original){read=a.title+'\n\n'+readingPassage(original.text,query);scope='Official original is available for reading; AI receives selected passages only. Published '+a.published_at;}evidence=[{id:'source',label:a.source+' — available source text',text:read,url:original?.url||a.source_url}];
   }else if(input.kind==='lesson'){
    const {data:a}=await s.from('ai_outputs').select('*').eq('id',input.id).eq('kind','lesson').maybeSingle();if(!a)throw new HttpError(404,'Lesson unavailable.');
    title=a.content.title;read=title+'\n\n'+a.content.answer;url='/learn/ai/'+a.id;scope='Saved AI learning article with its original learning evidence';evidence=a.source_snapshot.evidence;

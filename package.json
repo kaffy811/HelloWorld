@@ -8,7 +8,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "test": "node tests/onboarding.mjs && node --test tests/news.mjs tests/market.mjs tests/exploration.mjs tests/reader.mjs tests/live-context.mjs tests/assistant.mjs tests/billing.mjs tests/auth.mjs tests/profile.mjs tests/product-feedback.mjs",
+    "test": "node tests/onboarding.mjs && node --test tests/news.mjs tests/market.mjs tests/exploration.mjs tests/reader.mjs tests/live-context.mjs tests/assistant.mjs tests/billing.mjs tests/auth.mjs tests/profile.mjs tests/product-feedback.mjs tests/vocabulary.mjs",
     "sync:news": "node scripts/sync-us-news.mjs",
     "test:db": "node tests/rls.mjs",
     "test:http": "node tests/public-http.mjs",

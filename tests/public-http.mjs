@@ -91,13 +91,13 @@ assert.ok(!/learning_return=/i.test(backgroundHome.headers.get('set-cookie')||''
 for(const authorization of ['', 'Bearer invalid']){const r=await fetch(origin+'/api/news/scheduled',{method:'POST',headers:{Authorization:authorization}});assert.equal(r.status,401,'scheduled importer must reject missing or forged token');}
 
 // Navigation consolidation and combined stock filters: read-only, no model calls.
-for(const [path,destination] of [['/learn','/#today'],['/learn?view=saved','/notebook?kind=lessons'],['/watchlist','/stocks?view=watchlist']]){
+for(const [path,destination] of [['/learn','/#today'],['/learn?view=saved','/notebook?kind=terms'],['/watchlist','/stocks?view=watchlist']]){
  const r=await fetch(origin+path,{redirect:'manual'});assert.equal(r.status,307,path);assert.equal(new URL(r.headers.get('location'),origin).href,origin+destination);
 }
 const homeHTML=await (await fetch(origin+'/')).text();
-assert.match(homeHTML,/Your five ideas for today/);assert.ok(!homeHTML.includes('Understand company updates'));assert.ok(!homeHTML.includes('Find a stock or news topic'));
+assert.match(homeHTML,/Your six words for today/);assert.ok(!homeHTML.includes('Understand company updates'));assert.ok(!homeHTML.includes('Find a stock or news topic'));
 assert.ok(!homeHTML.includes('learning-search'));
-const staleSearch=await (await fetch(origin+'/?q=EPS')).text();assert.match(staleSearch,/Your five ideas for today/);assert.ok(!staleSearch.includes('Search results'));
+const staleSearch=await (await fetch(origin+'/?q=EPS')).text();assert.match(staleSearch,/Your six words for today/);assert.ok(!staleSearch.includes('Search results'));
 const lessonHTML=await (await fetch(origin+'/learn/eps')).text();assert.ok(!lessonHTML.includes('Explain article'));assert.ok(!lessonHTML.includes('Learning source'));assert.ok(!lessonHTML.includes('TRY IT IN A REAL COMPANY'));assert.match(lessonHTML,/CHECK YOUR UNDERSTANDING/);
 const chatRedirect=await fetch(origin+'/assistant?view=earlier',{redirect:'manual'});assert.equal(chatRedirect.status,307);assert.match(chatRedirect.headers.get('location'),/login/);
 const stockSearch=await (await fetch(origin+'/stocks?q=AAPL')).text();assert.match(stockSearch,/href="\/stocks\/AAPL"/);assert.ok(!stockSearch.includes('href="/stocks/COST"'));
@@ -109,4 +109,12 @@ console.log('PASS: learning-first home, directory search, private watchlist filt
 
 const techStocks=await (await fetch(origin+'/stocks?sector=Consumer%20technology')).text();assert.match(techStocks,/href="\/stocks\/AAPL"/);assert.ok(!techStocks.includes('href="/stocks/MSFT"'));
 const conflictingFilters=await (await fetch(origin+'/stocks?sector=Consumer%20technology&q=MSFT')).text();assert.match(conflictingFilters,/No companies match these filters/);
-const chineseTerms=await (await fetch(origin+'/?q='+encodeURIComponent('现金流'),{headers:{Cookie:'clearstock_language=zh-Hans'}})).text();assert.match(chineseTerms,/href="\/learn\/cash-flow"/);assert.ok(!chineseTerms.includes('learning-search'));assert.match(chineseTerms,/今日五个学习主题/);
+const chineseTerms=await (await fetch(origin+'/?q='+encodeURIComponent('现金流'),{headers:{Cookie:'clearstock_language=zh-Hans'}})).text();assert.match(chineseTerms,/href="\/learn\/cash-flow"/);assert.ok(!chineseTerms.includes('learning-search'));assert.match(chineseTerms,/今日六个金融词汇/);
+
+const vocab=await fetch(origin+'/api/vocabulary?term=EPS');assert.equal(vocab.status,200);assert.equal((await vocab.json()).entry.selection.glossary,'eps');
+const absent=await fetch(origin+'/api/vocabulary?term=NOTAFINANCIALTERM731');assert.equal((await absent.json()).entry,null);
+const forbiddenVocab=await fetch(origin+'/api/vocabulary',{method:'POST',headers:{'Content-Type':'application/json',Origin:origin},body:JSON.stringify({term:'liquidity'})});assert.equal(forbiddenVocab.status,401);
+const badVocab=await fetch(origin+'/api/vocabulary?term='+encodeURIComponent('x'.repeat(161)));assert.equal(badVocab.status,400);
+const filtersHTML=await (await fetch(origin+'/news?source=sec')).text();assert.ok(!filtersHTML.includes('name="source"'));
+assert.match(homeHTML,/Explain a financial word or sentence/);assert.match(homeHTML,/Financial vocabulary only/);
+console.log('PASS: financial-only lookup, anonymous glossary access, authenticated AI boundary and removed source filter.');

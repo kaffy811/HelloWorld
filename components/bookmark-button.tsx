@@ -15,6 +15,7 @@ export function BookmarkButton({
   selection: {
     concept?: string;
     glossary?: string;
+    topic?: string;
     analysis_id?: string;
     section?: string;
     index?: number;

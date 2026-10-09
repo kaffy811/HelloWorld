@@ -1,3 +1,5 @@
+import {topics} from '@/lib/ai/topics.mjs';
+import {lookupVocabulary} from '@/lib/ai/vocabulary.mjs';
 import {glossary,glossaryText} from '@/lib/market/glossary.mjs';
 import {getLanguage} from '@/lib/i18n/server';
 import { revalidatePath } from "next/cache";
@@ -18,6 +20,7 @@ export async function POST(request: Request) {
     if (!input || typeof input !== "object" || Array.isArray(input))
       throw new HttpError(400, "Invalid saved item.");
     if(input.glossary){const entry=glossary.find(g=>g.key===input.glossary);if(!entry)throw new HttpError(400,"Choose a known glossary term.");const language=await getLanguage(),g=glossaryText(entry,language);const {error}=await adminClient().from("knowledge_bookmarks").upsert({user_id:user.id,source_key:"glossary:"+entry.key+":"+language,kind:"term",text:g.term,explanation:g.definition,source_url:"/learn",provenance:"Learning library"},{onConflict:"user_id,source_key",ignoreDuplicates:true});if(error)throw new HttpError(503,"Your notebook is temporarily unavailable. Please try again.");revalidatePath("/notebook");return Response.json({saved:true});}
+    if(input.topic){const topic=topics.find(t=>t.key===input.topic);if(!topic)throw new HttpError(400,'Choose a known glossary term.');const language=await getLanguage(),entry=lookupVocabulary(topic.term,language);if(!entry)throw new HttpError(400,'Choose a known glossary term.');const {error}=await adminClient().from('knowledge_bookmarks').upsert({user_id:user.id,source_key:entry.source_key,kind:'term',text:entry.term,explanation:entry.definition,source_url:'/?term='+encodeURIComponent(entry.term),provenance:'Learning library'},{onConflict:'user_id,source_key',ignoreDuplicates:true});if(error)throw new HttpError(503,'Your notebook is temporarily unavailable. Please try again.');revalidatePath('/notebook');return Response.json({saved:true});}
     if (!input.concept && input.section !== "terms") throw new HttpError(410,"Sentence collections have been retired. Save an explained term or write your own note.");
     let analysis = null;
     if (!input.concept) {
