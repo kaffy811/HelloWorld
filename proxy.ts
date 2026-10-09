@@ -44,6 +44,7 @@ export const config = {
     "/watchlist",
     "/materials",
     "/assistant",
+    "/feedback",
     "/api/:path*",
   ],
 };

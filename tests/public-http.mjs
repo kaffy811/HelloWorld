@@ -8,7 +8,7 @@ for (const path of [
   "/api/bookmarks",
   "/api/ai/explain", "/api/ai/chat", "/api/ai/daily", "/api/ai/save", "/api/ai/feedback", "/api/news/refresh",
   "/api/notes", "/api/images", "/api/ai/comments", "/api/profile",
-  "/api/feedback",
+  "/api/feedback", "/api/product-feedback",
   "/api/ratings",
   "/api/watchlist",
   "/api/learning",
@@ -54,7 +54,7 @@ for (const [next, expected] of [
   assert.match(cookie, /HttpOnly/i);
   assert.match(cookie, /SameSite=lax/i);
 }
-for(const path of ["/stocks/AAPL","/stocks/AAPL/news","/stocks/AAPL/financials","/learn","/learn/eps","/news","/news?category=policy&period=7d","/"]){
+for(const path of ["/stocks/AAPL","/stocks/AAPL/news","/stocks/AAPL/financials","/learn","/learn/eps","/feedback","/news","/news?category=policy&period=7d","/"]){
  const response=await fetch(origin+path);assert.equal(response.status,200,path+" public page");
  const html=await response.text();assert.match(html,/<html[^>]*lang="en"/,path+" defaults to English");assert.ok(!html.includes("Create learning card"),path+" retired learning-card UI");
 }

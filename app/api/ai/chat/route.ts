@@ -42,14 +42,18 @@ export async function POST(request:Request){try{
   input.expected_revision=conversation.revision;
  }
 
- const ids=imageIds(input.image_ids,1),attachments=await ownedImages(supabase,user.id,ids);
+ const ids=imageIds(input.image_ids,1);
+ if(ids.length&&conversation.source_kind!=='general')throw new HttpError(400,'Ask about an image in the AI assistant. Article explanations use their saved sources.');
  const initial=typeof input.question!=='string'||!input.question.trim();const question=initial?(mode==='translate'?'Translate the available article text.':'Explain this article simply, including its meaning, business connection and limits.'):input.question.trim();
  if(conversation.source_kind==='general'&&initial)throw new HttpError(400,'Ask a question to begin.');
  if(question.length>1000)throw new HttpError(400,'Keep your question under 1,000 characters.');
  const {data:messages,error:historyError}=await supabase.from('ai_outputs').select('*').eq('owner_id',user.id).eq('conversation_id',conversation.id).order('position');if(historyError)throw new HttpError(503,'Conversation history unavailable.');
+ const prior=messages?.at(-1)?.source_snapshot?.image_inputs||[];
+ const retained=input.image_ids===undefined&&conversation.source_kind==='general'?imageIds(prior.map((i:{id:string})=>i.id),1):ids;
+ const attachments=await ownedImages(supabase,user.id,retained);
  if(initial&&!attachments.length&&messages?.some(m=>m.question===question&&!reviewedOutput(m).validation_error))return Response.json({conversation,messages:(messages||[]).map(reviewedOutput)});
  if(input.expected_revision!==undefined&&(!Number.isInteger(input.expected_revision)||input.expected_revision!==conversation.revision)){
-  const match=messages?.find(m=>m.position===input.expected_revision+1&&m.question===question);if(match)return Response.json({conversation,messages:(messages||[]).map(reviewedOutput)});throw new HttpError(409,'This conversation changed. Close and reopen it before sending again.');
+  const match=messages?.find(m=>m.position===input.expected_revision+1&&m.question===question&&JSON.stringify(m.source_snapshot.image_inputs?.map((i:{id:string})=>i.id)||[])===JSON.stringify(retained));if(match)return Response.json({conversation,messages:(messages||[]).map(reviewedOutput)});throw new HttpError(409,'This conversation changed. Close and reopen it before sending again.');
  }
  if(conversation.revision>=12)throw new HttpError(429,'This conversation has reached 12 replies. Your saved history remains available.');
  const history=(messages||[]).filter(m=>!reviewedOutput(m).validation_error).slice(-4).map(m=>({question:m.question,answer:m.content.answer.slice(0,1800)}));

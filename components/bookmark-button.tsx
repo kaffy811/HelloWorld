@@ -32,7 +32,7 @@ export function BookmarkButton({
       <Link
         className="save-knowledge"
         href={`/login?next=${encodeURIComponent(returnPath)}`}
-      ><T text="＋ Save"/></Link>
+      ><T text="Save to Notebook"/></Link>
     );
   return (
     <span className="save-knowledge-control">
@@ -59,10 +59,10 @@ export function BookmarkButton({
           }
         }}
       >
-        {busy ? <T text="Saving…"/> : saved ? <T text="✓ Saved"/> : <T text="＋ Save"/>}
+        {busy ? <T text="Saving…"/> : saved ? <T text="In Notebook"/> : <T text="Save to Notebook"/>}
       </button>
       {saved && (
-        <Link className="small" href="/notebook"><T text="Open notebook ↗"/></Link>
+        <Link className="small" href="/notebook?kind=terms"><T text="Open notebook ↗"/></Link>
       )}
       {error && (
         <span className="small" role="alert">

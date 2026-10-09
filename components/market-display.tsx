@@ -88,7 +88,7 @@ export function StockTable({
           {companies.map(c=><StockRow key={c.ticker} c={c} initial={priceFor(data,c.ticker)} watched={watched.has(c.ticker)} signedIn={signedIn} available={available}/>)}
         </tbody>
       </table>
-      <p className="small table-caption"><T text="USD · price change against the previous IEX daily close. Open a stock to see its price timestamp and data source."/></p>
+      <p className="small table-caption"><T text="Currently covering six US stocks: AAPL, COST, MSFT, NFLX, NKE and SBUX."/></p>
     </div>
   );
 }

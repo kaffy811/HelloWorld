@@ -71,6 +71,7 @@ export default async function Home({
         <div>
           <input
             id="company-search"
+            aria-describedby="search-scope"
             name="q"
             defaultValue={q}
             maxLength={80}
@@ -78,6 +79,7 @@ export default async function Home({
           />
           <button className="button secondary"><T text="Search"/></button>
         </div>
+        <p id="search-scope" className="small"><T text="Search stocks and news available on Clearstock. This does not search the web."/></p>
       </form>
       <div className="dashboard-columns">
         <section id="today" className="content-section">
@@ -156,7 +158,7 @@ export default async function Home({
           <div className="panel notebook-promo">
             <span className="eyebrow"><T text="YOUR KNOWLEDGE NOTEBOOK"/></span>
             <h3><T text="Keep the ideas that click."/></h3>
-            <p><T text="Save terms and sentences with their explanations. Return to the original story whenever you need context."/></p>
+            <p><T text="Your saved terms, learning articles, chats and personal notes are all in Notebook."/></p>
             <Link className="source" href="/notebook"><T text="Open notebook →"/></Link>
           </div>
         </aside>

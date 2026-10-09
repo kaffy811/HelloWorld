@@ -40,7 +40,7 @@ export default async function RootLayout({
         <main>{children}</main>
         <footer>
           <span><T text="Clearstock · Understand US stocks, one idea at a time."/></span>
-          <span><T text="Educational explanations. Sources and uncertainty included."/></span>
+          <span><T text="Have an idea to improve Clearstock?"/> <Link className="footer-feedback" href="/feedback"><T text="Feedback"/> ↗</Link></span>
         </footer>
       <AssistantLauncher/></LiveMarketProvider></LanguageProvider></body>
     </html>

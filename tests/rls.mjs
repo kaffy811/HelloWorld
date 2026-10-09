@@ -511,6 +511,24 @@ try {
     await db.query("select public.settle_ai_usage($1,'{}',false,null)",[r.run_id]);
     assert.equal(Number((await db.query('select estimated_cost_usd from public.ai_usage_ledger where run_id=$1',[r.run_id])).rows[0].estimated_cost_usd),.001165);
   });
+  await check("product feedback is owner-only, append-only, authenticated and rate limited",async()=>{
+    await db.exec('reset role;');
+    await db.query("insert into auth.users(id) values($1),($2) on conflict do nothing",[u1,u2]);
+    await role('authenticated',u1);
+    const fid='f1111111-1111-4111-8111-111111111111';
+    await db.query("insert into public.product_feedback(id,owner_id,body) values($1,$2,'Make saved knowledge easier to find')",[fid,u1]);
+    await denied("insert into public.product_feedback(id,owner_id,body) values(gen_random_uuid(),$1,'Forged feedback owner')",[u2]);
+    await denied("update public.product_feedback set body='Changed' where id=$1",[fid]);
+    await denied("delete from public.product_feedback where id=$1",[fid]);
+    await denied("insert into public.product_feedback(id,owner_id,body,created_at) values(gen_random_uuid(),$1,'Backdated feedback',now()-interval '2 days')",[u1]);
+    await role('authenticated',u2);assert.equal((await db.query('select id from public.product_feedback')).rows.length,0);
+    await role('anon');await denied('select id from public.product_feedback');await denied("insert into public.product_feedback(id,owner_id,body) values(gen_random_uuid(),$1,'Anonymous feedback')",[u1]);
+    await role('authenticated',u1);await db.query("select set_config('request.jwt.claims','{\"is_anonymous\":true}',false)");await denied("insert into public.product_feedback(id,owner_id,body) values(gen_random_uuid(),$1,'Guest feedback')",[u1]);await db.query("select set_config('request.jwt.claims','{}',false)");
+    for(let i=0;i<4;i++)await db.query("insert into public.product_feedback(id,owner_id,body) values(gen_random_uuid(),$1,'Another useful suggestion')",[u1]);
+    await denied("insert into public.product_feedback(id,owner_id,body) values(gen_random_uuid(),$1,'One too many suggestions')",[u1]);
+    assert.equal((await db.query('select id from public.product_feedback')).rows.length,5);
+    await db.exec('reset role;');
+  });
   console.log(
     `PASS: ${passed} PostgreSQL migration and RLS scenarios. Production database was not touched.`,
   );
