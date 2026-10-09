@@ -1,11 +1,17 @@
+import { safeReturnPath } from "@/lib/news/validation.mjs";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-export async function loadProfile() {
+export async function loadProfile(returnTo = "/") {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user)
+    redirect(
+      returnTo === "/"
+        ? "/login"
+        : `/login?next=${encodeURIComponent(safeReturnPath(returnTo))}`,
+    );
   const { data: profile, error } = await supabase
     .from("profiles")
     .select("*")

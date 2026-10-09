@@ -1,5 +1,23 @@
+
+import {T} from "@/components/language-provider";
+import { safeReturnPath } from "@/lib/news/validation.mjs";
 import { GoogleLogin } from "@/components/google-login";
-export default async function Login({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  const { error } = await searchParams;
-  return <section className="narrow panel"><span className="eyebrow">YOUR LEARNING SPACE</span><h1>A little clarity.<br/>A better starting point.</h1><p>Sign in to complete your profile and open your private learning space.</p>{error && <p className="notice" role="alert">Sign-in could not be completed. Please start again.</p>}<GoogleLogin/><p className="small">Company introductions are available without an account.</p></section>;
+export default async function Login({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; next?: string }>;
+}) {
+  const { error, next } = await searchParams;
+  return (
+    <section className="narrow panel">
+      <span className="eyebrow"><T text="YOUR LEARNING SPACE"/></span>
+      <h1><T text="A little clarity."/><br /><T text="A better starting point."/></h1>
+      <p><T text="Sign in to rate explanations, follow US companies and save your learning."/></p>
+      {error && (
+        <p className="notice" role="alert"><T text="Sign-in could not be completed. Please start again."/></p>
+      )}
+      <GoogleLogin next={safeReturnPath(next)} />
+      <p className="small"><T text="Company introductions are available without an account."/></p>
+    </section>
+  );
 }

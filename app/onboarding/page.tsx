@@ -1,3 +1,6 @@
+import {getTranslator} from "@/lib/i18n/server";
+
+import {T} from "@/components/language-provider";
 import { redirect } from "next/navigation";
 import { loadProfile, avatarFor } from "@/lib/profile";
 import { onboardingDestination } from "@/lib/onboarding";
@@ -7,6 +10,7 @@ export default async function Onboarding({
 }: {
   searchParams: Promise<{ edit?: string }>;
 }) {
+ const {t:ui}=await getTranslator();
   const { supabase, user, profile } = await loadProfile();
   const destination = onboardingDestination(profile);
   if (
@@ -17,16 +21,13 @@ export default async function Onboarding({
     redirect(destination);
   return (
     <section className="narrow panel">
-      <div className="step-indicator" aria-label="Step 1 of 2">
-        <span className="active">1 · Your profile</span>
-        <span>2 · Learning preferences</span>
+      <div className="step-indicator" aria-label={ui("Step 1 of 2")}>
+        <span className="active"><T text="1 · Your profile"/></span>
+        <span><T text="2 · Learning preferences"/></span>
       </div>
-      <span className="eyebrow">WELCOME TO CLEARSTOCK</span>
-      <h1>What should we call you?</h1>
-      <p>
-        Add your name, and a photo if you like. Your learning preferences come
-        next.
-      </p>
+      <span className="eyebrow"><T text="WELCOME TO CLEARSTOCK"/></span>
+      <h1><T text="What should we call you?"/></h1>
+      <p><T text="Add your name, and a photo if you like. Your learning preferences come next."/></p>
       <ProfileForm
         userId={user.id}
         email={user.email ?? ""}

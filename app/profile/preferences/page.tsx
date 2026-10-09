@@ -1,3 +1,5 @@
+
+import {T} from "@/components/language-provider";
 import { redirect } from "next/navigation";
 import { loadProfile } from "@/lib/profile";
 import { onboardingDestination } from "@/lib/onboarding";
@@ -8,9 +10,9 @@ export default async function Preferences() {
   if (destination !== "/") redirect(destination);
   return (
     <section className="narrow panel">
-      <span className="eyebrow">LEARNING PREFERENCES</span>
-      <h1>A starting point that fits.</h1>
-      <p>Update or clear your answers whenever you like.</p>
+      <span className="eyebrow"><T text="LEARNING PREFERENCES"/></span>
+      <h1><T text="A starting point that fits."/></h1>
+      <p><T text="Update or clear your answers whenever you like."/></p>
       <PreferencesForm userId={user.id} initial={profile} />
     </section>
   );

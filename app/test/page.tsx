@@ -1,3 +1,5 @@
+
+import {T} from "@/components/language-provider";
 import { supabase } from "@/lib/supabase";
 
 export default async function TestPage() {
@@ -9,7 +11,7 @@ export default async function TestPage() {
     if (error) {
         return (
             <main style={{ padding: "40px" }}>
-                <h1>Supabase Error</h1>
+                <h1><T text="Supabase Error"/></h1>
                 <pre>{error.message}</pre>
             </main>
         );
@@ -17,7 +19,7 @@ export default async function TestPage() {
 
     return (
         <main style={{ padding: "40px" }}>
-            <h1>Supabase Connection Test</h1>
+            <h1><T text="Supabase Connection Test"/></h1>
             <pre>{JSON.stringify(data, null, 2)}</pre>
         </main>
     );

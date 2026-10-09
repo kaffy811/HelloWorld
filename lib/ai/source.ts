@@ -1,0 +1,43 @@
+import {glossary} from '@/lib/market/glossary.mjs';
+import type {SupabaseClient} from '@supabase/supabase-js';
+import {HttpError} from '@/lib/news/api';
+import {UUID} from '@/lib/news/validation.mjs';
+import {topics} from './topics.mjs';
+import {readingNotes} from '@/lib/market/learning-path.mjs';
+import {getLanguage} from '@/lib/i18n/server';
+import {translate} from '@/lib/i18n/translate.mjs';
+import {enrichSource} from './context';
+import type {ReaderSource,SourceSnapshot} from './types';
+function strings(value:unknown):string[]{if(typeof value==='string')return [value];if(Array.isArray(value))return value.flatMap(strings);if(value&&typeof value==='object')return Object.entries(value).filter(([k])=>k!=='evidence_ids'&&k!=='sentiment').flatMap(([,v])=>strings(v));return [];}
+export async function resolveSource(s:SupabaseClient,input:ReaderSource,query=''):Promise<SourceSnapshot>{
+ if(!input||typeof input!=='object'||typeof input.id!=='string')throw new HttpError(400,'Choose an article to explain.');
+ let title='',read='',ticker:string|null=null,url='',scope='',evidence:SourceSnapshot['evidence']=[];
+ if(input.kind==='general'){
+  if(!UUID.test(input.id))throw new HttpError(400,'Invalid conversation.');
+  return {kind:'general',id:input.id,title:'Clearstock assistant',read_text:'',source_url:'/assistant',scope:'General assistant; no browsing or verified live source. Uploaded images are user-provided, unverified context.',context_version:'assistant-v1',evidence:[]};
+ }else if(input.kind==='concept'){
+  const c=topics.find(t=>t.key===input.id);if(!c)throw new HttpError(404,'Learning topic unavailable.');
+  title=c.term;read=[c.term,c.definition,...(readingNotes[c.key as keyof typeof readingNotes]||c.notes)].join('\n\n');url='/learn/'+c.key;scope='Learning library definition and reading notes';evidence=[{id:c.key,label:c.term,text:read,url:c.source}];
+ }else if(input.kind==='stock'){
+  const {data:c}=await s.from('companies').select('ticker,name,summary,sector').eq('ticker',input.id).maybeSingle();if(!c)throw new HttpError(404,'Company unavailable.');
+  title=c.name+' ('+c.ticker+')';ticker=c.ticker;read=[c.name,c.summary,c.sector].join('\n');url='/stocks/'+c.ticker;scope='Company introduction and learning glossary; market snapshots supplied separately';evidence=[{id:'company',label:'Company introduction',text:read}];
+  const glossaryRead=glossary.map(g=>[g.en,g.zh,g.definitionEn,g.definitionZh].join(' — ')).join('\n');read+='\n'+glossaryRead;evidence.push({id:'glossary',label:'Reviewed financial glossary',text:glossaryRead});
+ }else{
+  if(!UUID.test(input.id))throw new HttpError(400,'Invalid article.');
+  if(input.kind==='analysis'){
+   const {data:a}=await s.from('analysis_versions').select('id,ticker,kind,content,evidence,data_as_of').eq('id',input.id).maybeSingle();if(!a||a.kind==='material')throw new HttpError(404,'Explanation unavailable.');
+   title=a.content.headline;ticker=a.ticker;read=strings(a.content).join('\n\n');url=(a.kind==='news'?'/news/':'/learning/')+a.id;scope='Saved article and evidence as of '+a.data_as_of;
+   evidence=(a.evidence||[]).map((e:{id:string;label:string;text:string;url?:string})=>({...e,text:e.text.slice(0,16000)}));
+   // Existing AI prose is context to explain, never upgraded to primary factual evidence.
+  }else if(input.kind==='article'){
+   const {data:a}=await s.from('market_articles').select('id,title,excerpt,source,source_url,tickers,published_at').eq('id',input.id).maybeSingle();if(!a)throw new HttpError(404,'Article unavailable.');
+   title=a.title;read=[a.title,a.excerpt||''].join('\n\n');url='/articles/'+a.id;ticker=a.tickers?.[0]||null;scope='Available source title and excerpt only; published '+a.published_at;evidence=[{id:'source',label:a.source+' excerpt',text:read,url:a.source_url}];
+  }else if(input.kind==='lesson'){
+   const {data:a}=await s.from('ai_outputs').select('*').eq('id',input.id).eq('kind','lesson').maybeSingle();if(!a)throw new HttpError(404,'Lesson unavailable.');
+   title=a.content.title;read=title+'\n\n'+a.content.answer;url='/learn/ai/'+a.id;scope='Saved AI learning article with its original learning evidence';evidence=a.source_snapshot.evidence;
+  }else throw new HttpError(400,'Unsupported article.');
+ }
+ if(['concept','stock'].includes(input.kind)){const language=await getLanguage();if(language==='zh-Hans')read+='\n\n'+read.split('\n').map(text=>translate(language,text)).join('\n');}
+ const bounded=evidence.slice(0,8);if(!bounded.length)throw new HttpError(422,'There is no source text to explain.');
+ return enrichSource({kind:input.kind,id:input.id,title:title.slice(0,240),read_text:read.slice(0,14000),source_url:url,ticker,scope,evidence:bounded},query);
+}

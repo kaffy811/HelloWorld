@@ -1,0 +1,4 @@
+import {readerUser,readerResponse} from '@/lib/ai/api';
+import {HttpError} from '@/lib/news/api';
+import {UUID} from '@/lib/news/validation.mjs';
+export async function GET(request:Request,{params}:{params:Promise<{id:string}>}){try{const {id}=await params;if(!UUID.test(id))throw new HttpError(404,'Output unavailable.');const {supabase,user}=await readerUser();const {data:o}=await supabase.from('ai_outputs').select('*').eq('id',id).eq('owner_id',user.id).maybeSingle();if(!o)throw new HttpError(404,'Output unavailable.');const {data:run}=await supabase.from('generation_runs').select('id,prompt,usage,created_at,completed_at').eq('id',o.run_id).eq('owner_id',user.id).single();if(!run)throw new HttpError(503,'Generation record unavailable.');return Response.json({format_version:1,output:o,generation:run},{headers:{'Cache-Control':'private, no-store','Content-Disposition':'attachment; filename="clearstock-ai-'+id+'.json"'}});}catch(e){return readerResponse(e);}}

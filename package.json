@@ -3,25 +3,35 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "check:setup": "node scripts/check-setup.mjs",
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node tests/onboarding.mjs && node --test tests/news.mjs tests/market.mjs tests/exploration.mjs tests/reader.mjs tests/live-context.mjs tests/assistant.mjs tests/billing.mjs",
+    "sync:news": "node scripts/sync-us-news.mjs",
+    "test:db": "node tests/rls.mjs",
+    "test:http": "node tests/public-http.mjs",
+    "sync:data": "node scripts/sync-market-data.mjs",
+    "replay:ai": "node scripts/replay-ai.mjs",
+    "report:ai": "node scripts/report-ai-usage.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.116.0",
-    "next": "16.3.5",
+    "next": "16.3.8",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "sharp": "0.35.5"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.3.5",
+    "eslint-config-next": "16.3.8",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

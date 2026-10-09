@@ -1,41 +1,53 @@
-import { onboardingDestination } from "@/lib/onboarding";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-export default async function Notebook() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("display_name,first_name,last_name,onboarding_completed_at")
-    .eq("id", user.id)
-    .single();
-  if (!profile) throw new Error("Profile unavailable");
-  const destination = onboardingDestination(profile);
-  if (destination !== "/") redirect(destination);
-  return (
-    <section className="narrow panel">
-      <span className="eyebrow">MEMBERS ONLY · MY LEARNING</span>
-      <h1>Welcome, {profile.display_name}.</h1>
-      <p>
-        You are signed in. This learning space is protected on the server and is
-        only available after you complete your profile.
-      </p>
-      <div className="question">
-        <h3>Your first research checklist</h3>
-        <ul>
-          <li>Explain how a company makes money.</li>
-          <li>Identify one question you cannot answer yet.</li>
-          <li>Find a source you can use to investigate it.</li>
-        </ul>
-      </div>
-      <p>Saved research notes will arrive in a later release.</p>
-      <Link className="button" href="/">
-        Explore companies →
-      </Link>
-    </section>
-  );
+import {getTranslator} from "@/lib/i18n/server";
+
+import {T} from "@/components/language-provider";
+import Link from 'next/link';
+import {reviewedOutput} from '@/lib/ai/prompt.mjs';
+import {AISave} from '@/components/ai-output-tools';
+import type {Conversation,AIOutput} from '@/lib/ai/types';
+import {loadProfile} from '@/lib/profile';
+import {onboardingDestination} from '@/lib/onboarding';
+import {redirect} from 'next/navigation';
+import {RemoveBookmark} from '@/components/bookmark-button';
+import {ArchiveNote,type PersonalNote} from '@/components/note-editor';
+import {easternDate} from '@/lib/news/data';
+import type {Bookmark} from '@/lib/market/types';
+import type {Analysis} from '@/lib/news/types';
+export default async function Notebook({searchParams}:{searchParams:Promise<{kind?:string|string[];q?:string|string[];page?:string|string[];archived?:string|string[];legacy?:string|string[]}>}){
+ const {t:ui}=await getTranslator();
+ const {supabase:s,user,profile}=await loadProfile('/notebook');const destination=onboardingDestination(profile);if(destination!=='/')redirect(destination);
+ const raw=await searchParams,one=(v:string|string[]|undefined)=>Array.isArray(v)?v[0]:v,input={kind:one(raw.kind),q:one(raw.q),page:one(raw.page),archived:one(raw.archived),legacy:one(raw.legacy)},kind=['terms','chats','notes'].includes(input.kind||'')?input.kind!:'terms',q=(input.q||'').trim().slice(0,80).replace(/[%_]/g,''),current=Math.max(1,Math.min(1000,parseInt(input.page||'1')||1)),archived=input.archived==='1',legacy=input.legacy==='1';
+ let bookmarks:Bookmark[]=[],answers:(Analysis&{run_id:string})[]=[],notes:PersonalNote[]=[],count=0,error=false;
+ let conversations:Conversation[]=[];const latestReplies=new Map<string,AIOutput>();
+ const questions=new Map<string,string>(),votes=new Map<string,{score?:number;value?:number;reason?:string}>();
+ if(kind==='terms'){
+  let query=s.from('knowledge_bookmarks').select('*',{count:'exact'}).eq('user_id',user.id).order('created_at',{ascending:false});if(q)query=query.ilike('text','%'+q+'%');
+  const result=await query.range((current-1)*20,current*20-1);bookmarks=(result.data||[]) as Bookmark[];count=result.count||0;error=!!result.error;
+ } else if(kind==='chats'&&!legacy){
+  let query=s.from('ai_conversations').select('*',{count:'exact'}).eq('owner_id',user.id).eq('saved',true).order('updated_at',{ascending:false});if(q)query=query.ilike('title','%'+q+'%');const result=await query.range((current-1)*20,current*20-1);conversations=(result.data||[]) as Conversation[];count=result.count||0;error=!!result.error;
+  if(conversations.length){const replies=await s.from('ai_outputs').select('*').eq('owner_id',user.id).in('conversation_id',conversations.map(c=>c.id)).order('position',{ascending:false});error=error||!!replies.error;for(const m of replies.data||[])if(!latestReplies.has(m.conversation_id))latestReplies.set(m.conversation_id,reviewedOutput(m) as AIOutput);}
+ } else if(kind==='chats'){
+  let query=s.from('analysis_versions').select('id,ticker,news_id,owner_id,kind,parent_id,content,evidence,is_public,created_at,data_as_of,language,run_id',{count:'exact'}).eq('owner_id',user.id).eq('kind','followup').order('created_at',{ascending:false});if(q)query=query.ilike('content->>headline','%'+q+'%');
+  const result=await query.range((current-1)*20,current*20-1);answers=(result.data||[]) as typeof answers;count=result.count||0;error=!!result.error;
+  if(answers.length){const [runs,oldRatings,newRatings]=await Promise.all([s.from('generation_runs').select('id,prompt').eq('owner_id',user.id).in('id',answers.map(a=>a.run_id)),s.from('ratings').select('analysis_id,value,reason').eq('user_id',user.id).in('analysis_id',answers.map(a=>a.id)),s.from('content_feedback').select('analysis_id,score,reason').eq('user_id',user.id).in('analysis_id',answers.map(a=>a.id))]);for(const r of runs.data||[]){try{questions.set(r.id,JSON.parse(r.prompt.user).question||'');}catch{}}for(const v of oldRatings.data||[])votes.set(v.analysis_id,v);for(const v of newRatings.data||[])votes.set(v.analysis_id,v);}
+ }else{
+  let query=s.from('personal_notes').select('*',{count:'exact'}).eq('user_id',user.id).order('updated_at',{ascending:false});query=archived?query.not('archived_at','is',null):query.is('archived_at',null);if(q)query=query.ilike('title','%'+q+'%');
+  const result=await query.range((current-1)*20,current*20-1);notes=(result.data||[]) as PersonalNote[];count=result.count||0;error=!!result.error;
+ }
+ const base=`/notebook?kind=${kind}&q=${encodeURIComponent(q)}${archived?'&archived=1':''}${legacy?'&legacy=1':''}`;
+ const explanation={terms:'Terms explained in context, saved with a source so you can revisit what they mean.',chats:legacy?'Earlier single-answer conversations remain available here.':'Only conversations you chose to Save appear here. Reopen the whole chat, continue asking, or download it.',notes:'Your own observations, reflections and study documents. Write, edit and download them privately.'}[kind];
+ return <><section className="page-heading"><span className="eyebrow"><T text="YOUR PRIVATE NOTEBOOK"/></span><h1><T text="Keep what you understand."/></h1><p><T text="Save explanations, revisit conversations and make room for your own thinking."/></p></section>
+ <nav className="tabs notebook-tabs" aria-label={ui("Notebook sections")}>{[['terms','Term explanations'],['chats','AI conversations'],['notes','My notes']].map(([key,label])=><Link key={key} className={kind===key?'active':''} href={'/notebook?kind='+key}>{ui(label)}</Link>)}</nav>
+ <div className="section-title notebook-intro"><p>{explanation}</p>{kind==='notes'&&<Link className="button" href="/notebook/notes/new"><T text="＋ New note"/></Link>}</div>
+ <form className="search-bar compact-search" action="/notebook"><input type="hidden" name="kind" value={kind}/>{legacy&&<input type="hidden" name="legacy" value="1"/>}{archived&&<input type="hidden" name="archived" value="1"/>}<label htmlFor="notebook-search">{kind==='terms'?<T text="Find a saved term"/>:<T text="Find by title"/>}</label><div><input id="notebook-search" name="q" defaultValue={q} maxLength={80} placeholder={kind==='terms'?'Revenue, EPS, profit margin…':'Search your notebook…'}/><button className="button secondary"><T text="Search"/></button></div></form>
+ {kind==='chats'&&<div className="note-view-toggle"><Link className={!legacy?'active':''} href="/notebook?kind=chats"><T text="Saved conversations"/></Link><Link className={legacy?'active':''} href="/notebook?kind=chats&legacy=1"><T text="Earlier answers"/></Link></div>}
+ {kind==='notes'&&<div className="note-view-toggle"><Link className={!archived?'active':''} href="/notebook?kind=notes"><T text="Active notes"/></Link><Link className={archived?'active':''} href="/notebook?kind=notes&archived=1"><T text="Archive"/></Link></div>}
+ {error?<div className="panel notice"><T text="Your notebook is temporarily unavailable. Please try again."/></div>:!count?<div className="panel empty-state"><h2>{q?<T text="No matching items"/>:kind==='terms'?<T text="Your first term starts here."/>:kind==='chats'?<T text="Your questions belong here."/>:archived?<T text="No archived notes"/>:<T text="A space for your own ideas."/>}</h2><p>{kind==='terms'?<T text="Save a term from a news explanation or the learning library. You can also select an explained term in an article."/>:kind==='chats'?<T text="Open Explain article from a news page, ask your questions and click Save in the chat to keep the whole conversation here."/>:archived?<T text="Archived notes can be restored at any time."/>:<T text="Create a private note about what you learned or what you would like to understand."/>}</p><Link className="button" href={kind==='notes'?'/notebook/notes/new':kind==='terms'?'/learn':'/#today'}>{kind==='notes'?<T text="Create a note →"/>:kind==='terms'?<T text="Explore terms →"/>:<T text="Explore news →"/>}</Link></div>:<>
+ {kind==='terms'&&<div className="notebook-grid">{bookmarks.map(b=><article className="panel notebook-item" key={b.id}><div className="card-top"><span className="eyebrow">{b.kind==='sentence'?<T text="Earlier saved excerpt"/>:<T text="TERM EXPLANATION"/>} · {b.provenance}</span>{b.ticker&&<Link className="ticker" href={'/stocks/'+b.ticker}>{b.ticker}</Link>}</div><h2>{b.text}</h2><details><summary><T text="Review explanation"/></summary><p>{b.explanation}</p></details><div className="notebook-item-footer"><Link className="source" href={b.source_url}><T text="Return to context ↗"/></Link><RemoveBookmark id={b.id}/></div><time className="small"><T text="Saved "/>{easternDate(b.created_at)}</time></article>)}</div>}
+ {kind==='chats'&&!legacy&&<div className="conversation-list ai-saved-chats">{conversations.map(c=>{const last=latestReplies.get(c.id);return <article className="panel conversation-item" key={c.id}><span className="eyebrow"><T text="SAVED PRIVATE AI CONVERSATION · "/>{c.revision}<T text=" REPLIES"/></span><h2><Link href={'/notebook/chats/'+c.id}>{c.title}</Link></h2>{last&&<div className="conversation-message"><span className="eyebrow"><T text="LATEST QUESTION"/></span><p>{last.question}</p><span className="eyebrow"><T text="AI ANSWER"/></span><p>{last.validation_error||last.content.answer.slice(0,300)}{!last.validation_error&&last.content.answer.length>300?'…':''}</p></div>}<div className="note-actions"><Link className="source" href={'/notebook/chats/'+c.id}><T text="Open whole conversation →"/></Link><a className="source" href={'/api/ai/conversations/'+c.id}><T text="Download Markdown ↗"/></a><AISave id={c.id} kind="chat" initial={true}/></div></article>;})}</div>}
+ {kind==='chats'&&legacy&&<div className="conversation-list">{answers.map(a=>{const vote=votes.get(a.id),bad=vote?.reason==='factual_error';return <article className="panel conversation-item" key={a.id}><div className="card-top"><span className="eyebrow"><T text="PRIVATE AI CONVERSATION"/></span><Link className="ticker" href={'/stocks/'+a.ticker}>{a.ticker}</Link></div><h2><Link href={'/learning/'+a.id}>{a.content.headline}</Link></h2><div className="conversation-message user-message"><span className="eyebrow"><T text="YOU ASKED"/></span><p>{questions.get(a.run_id)||'Open the saved answer to review its original generation prompt.'}</p></div><div className="conversation-message"><span className="eyebrow"><T text="AI ANSWER"/></span><p>{bad?<T text="You flagged a possible factual error. Revisit the original sources and your feedback before using this answer."/>:a.content.summary}</p></div>{vote&&(vote.score||vote.value===-1)&&<p className="small">{vote.score?'Your usefulness rating: '+vote.score+'/5': <T text="😕 You marked this answer as not helpful."/>}</p>}<div className="note-actions"><Link className="source" href={'/learning/'+a.id}><T text="Open & continue →"/></Link><a className="source" href={'/api/analyses/'+a.id+'/export'}><T text="Download conversation .md"/></a></div><time className="small"><T text="Generated "/>{easternDate(a.created_at)}</time></article>;})}</div>}
+ {kind==='notes'&&<div className="notebook-grid">{notes.map(n=><article className="panel notebook-item" key={n.id}><span className="eyebrow">{archived?<T text="ARCHIVED"/>:<T text="MY OWN WRITING"/>}</span><h2><Link href={'/notebook/notes/'+n.id}>{n.title}</Link></h2><p className="note-preview">{n.body.slice(0,260)}{n.body.length>260?'…':''}</p><div className="notebook-item-footer"><Link className="source" href={'/notebook/notes/'+n.id}><T text="Open note →"/></Link><ArchiveNote id={n.id} version={n.version} archived={archived}/></div><time className="small"><T text="Updated "/>{easternDate(n.updated_at)}</time></article>)}</div>}
+ </>}
+ {count>20&&<nav className="history-pagination" aria-label={ui("Notebook pages")}>{current>1&&<Link href={base+'&page='+(current-1)}><T text="← Previous"/></Link>}<span><T text="Page "/>{current}<T text=" of "/>{Math.ceil(count/20)}</span>{current*20<count&&<Link href={base+'&page='+(current+1)}><T text="Next →"/></Link>}</nav>}
+ </>;
 }

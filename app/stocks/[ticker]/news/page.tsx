@@ -1,0 +1,67 @@
+import {getTranslator} from "@/lib/i18n/server";
+
+import {T} from "@/components/language-provider";
+import Link from "next/link";
+import { stockContext, StockHeader } from "@/components/stock-header";
+import { articles } from "@/lib/market/data";
+import { ArticleList } from "@/components/market-display";
+import { analyses } from "@/lib/news/data";
+import { NewsCard } from "@/components/news-card";
+export default async function CompanyNews({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ ticker: string }>;
+  searchParams: Promise<{ page?: string }>;
+}) {
+ const {t:ui}=await getTranslator();
+  const ticker = (await params).ticker.toUpperCase(),
+    context = await stockContext(ticker),
+    current = Math.max(
+      1,
+      Math.min(100, Number.parseInt((await searchParams).page || "1") || 1),
+    ),
+    [feed, ai] = await Promise.all([
+      articles(ticker, undefined, current),
+      analyses(ticker, "news"),
+    ]);
+  return (
+    <>
+      <StockHeader context={context} tab="news" />
+      <section className="content-section">
+        <div className="section-title">
+          <h2><T text="Company updates"/></h2>
+          <span className="pill"><T text="SEC filings"/></span>
+        </div>
+        <p className="section-description"><T text="Original company reports and announcements, with publication dates and source links."/></p>
+        {feed.data.length ? (
+          <ArticleList items={feed.data} />
+        ) : (
+          <div className="panel">
+            {feed.error
+              ? <T text="Company updates are temporarily unavailable."/>
+              : <T text="No updates available yet."/>}
+          </div>
+        )}
+        <nav className="history-pagination" aria-label={ui("Company news pages")}>
+          {current > 1 && (
+            <Link href={`/stocks/${ticker}/news?page=${current - 1}`}><T text="← Previous"/></Link>
+          )}
+          {current * 30 < feed.count && (
+            <Link href={`/stocks/${ticker}/news?page=${current + 1}`}><T text="Next →"/></Link>
+          )}
+        </nav>
+      </section>
+      {ai.data.length > 0 && (
+        <section className="content-section">
+          <h2><T text="With AI explanations"/></h2>
+          <div className="news-grid">
+            {ai.data.map((a) => (
+              <NewsCard key={a.id} analysis={a} />
+            ))}
+          </div>
+        </section>
+      )}
+    </>
+  );
+}

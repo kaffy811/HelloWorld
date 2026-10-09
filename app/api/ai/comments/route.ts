@@ -1,0 +1,5 @@
+import {mutationUser,jsonBody,HttpError} from '@/lib/news/api';
+import {readerResponse} from '@/lib/ai/api';
+import {UUID} from '@/lib/news/validation.mjs';
+import {validateComment} from '@/lib/ai/preferences.mjs';
+export async function POST(request:Request){try{const {supabase,user}=await mutationUser(request),input=await jsonBody(request);if(!UUID.test(input?.output_id||''))throw new HttpError(400,'Choose a learning article.');let comment;try{comment=validateComment(input);}catch(e){throw new HttpError(400,(e as Error).message);}const {data:lesson}=await supabase.from('ai_outputs').select('id').eq('id',input.output_id).eq('owner_id',user.id).eq('kind','lesson').maybeSingle();if(!lesson)throw new HttpError(404,'Lesson unavailable.');const {data,error}=await supabase.from('ai_lesson_comments').upsert({owner_id:user.id,output_id:lesson.id,...comment,updated_at:new Date().toISOString()},{onConflict:'owner_id,output_id'}).select('body,preference,updated_at').single();if(error)throw new HttpError(503,'Your feedback could not be saved.');return Response.json({comment:data});}catch(e){return readerResponse(e);}}

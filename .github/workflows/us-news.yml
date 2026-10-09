@@ -1,0 +1,32 @@
+name: US company explanations
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: us-news-sync
+  cancel-in-progress: false
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run sync:news
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          AI_ENABLED: 'true'
+          AI_BILLING_MODE: ${{ vars.AI_BILLING_MODE || 'paid' }}
+          AI_DAILY_LIMIT: ${{ vars.AI_DAILY_LIMIT || '200' }}
+          AI_USER_DAILY_LIMIT: ${{ vars.AI_USER_DAILY_LIMIT || '50' }}
+          AI_DAILY_BUDGET_USD: ${{ vars.AI_DAILY_BUDGET_USD || '0.25' }}
+          AI_TOTAL_BUDGET_USD: ${{ vars.AI_TOTAL_BUDGET_USD || '4.5' }}
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}

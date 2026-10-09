@@ -1,4 +1,8 @@
 "use client";
+import {useLanguage} from "@/components/language-provider";
+
+import {T} from "@/components/language-provider";
+
 import { useState, useRef, useEffect, type FormEvent, type ChangeEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -21,6 +25,7 @@ export function ProfileForm({
   avatarUrl: string;
   onboarding?: boolean;
 }) {
+ const {t:ui}=useLanguage();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -156,7 +161,7 @@ export function ProfileForm({
           <div className="avatar-row">
             <button type="button" className="avatar-trigger" aria-label={photoSrc ? "View profile photo" : "Upload profile photo"} onClick={() => photoSrc ? photoDialog.current?.showModal() : choosePhoto()}>
               {photoSrc ? (
-                <Image unoptimized width={72} height={72} className="avatar" src={photoSrc} alt="Your profile photo" />
+                <Image unoptimized width={72} height={72} className="avatar" src={photoSrc} alt={ui("Your profile photo")} />
               ) : (
                 <span className="avatar placeholder">{(displayName || firstName).charAt(0) || "U"}</span>
               )}
@@ -165,31 +170,25 @@ export function ProfileForm({
               </span>
             </button>
             <div className="avatar-details">
-              <strong>Your account</strong>
+              <strong><T text="Your account"/></strong>
               <p className="small">{email}</p>
-              <button type="button" className="text-button avatar-change" onClick={choosePhoto}>{photoSrc ? "Change photo" : "Upload photo"}</button>
-              <p className="small">Optional · JPG, PNG or WebP · Up to 2 MB</p>
-              {photoPending && <p className="photo-pending" role="status">Photo not saved yet. {onboarding ? "Select Next to save." : "Select Save profile to save."}</p>}
+              <button type="button" className="text-button avatar-change" onClick={choosePhoto}>{photoSrc ? <T text="Change photo"/> : <T text="Upload photo"/>}</button>
+              <p className="small"><T text="Optional · JPG, PNG or WebP · Up to 2 MB"/></p>
+              {photoPending && <p className="photo-pending" role="status"><T text="Photo not saved yet. "/>{onboarding ? <T text="Select Next to save."/> : <T text="Select Save profile to save."/>}</p>}
             </div>
           </div>
-          <input ref={photoInput} type="file" hidden accept="image/jpeg,image/png,image/webp" aria-label="Choose profile photo" onChange={selectPhoto} />
-          <label>
-            Display name
-            <input
+          <input ref={photoInput} type="file" hidden accept="image/jpeg,image/png,image/webp" aria-label={ui("Choose profile photo")} onChange={selectPhoto} />
+          <label><T text="Display name"/><input
               name="display_name"
               defaultValue={displayName}
               autoComplete="nickname"
               required
               maxLength={40}
             />
-            <span className="small">
-              How we will address you. This does not need to be unique.
-            </span>
+            <span className="small"><T text="How we will address you. This does not need to be unique."/></span>
           </label>
           <div className="form-grid">
-            <label>
-              First name
-              <input
+            <label><T text="First name"/><input
                 name="first_name"
                 defaultValue={firstName}
                 autoComplete="given-name"
@@ -197,9 +196,7 @@ export function ProfileForm({
                 maxLength={80}
               />
             </label>
-            <label>
-              Last name
-              <input
+            <label><T text="Last name"/><input
                 name="last_name"
                 defaultValue={lastName}
                 autoComplete="family-name"
@@ -210,37 +207,35 @@ export function ProfileForm({
           </div>
           <button className="button" type="submit">
             {busy
-              ? "Saving…"
+              ? <T text="Saving…"/>
               : onboarding
-                ? "Next: learning preferences →"
-                : "Save profile"}
+                ? <T text="Next: learning preferences →"/>
+                : <T text="Save profile"/>}
           </button>
         </fieldset>
         <p role="status" aria-live="polite">
-          {message}
+          {ui(message)}
         </p>
       </form>
       <dialog ref={photoDialog} className="photo-dialog" aria-labelledby="photo-dialog-title" onClick={(event) => { if (event.target === event.currentTarget) photoDialog.current?.close(); }}>
         <div className="photo-dialog-content">
           <div className="photo-dialog-heading">
-            <h2 id="photo-dialog-title">Profile photo</h2>
-            <button type="button" className="text-button photo-close" aria-label="Close photo preview" onClick={() => photoDialog.current?.close()}>×</button>
+            <h2 id="photo-dialog-title"><T text="Profile photo"/></h2>
+            <button type="button" className="text-button photo-close" aria-label={ui("Close photo preview")} onClick={() => photoDialog.current?.close()}>×</button>
           </div>
-          {photoSrc && <Image unoptimized width={480} height={480} className="photo-preview" src={photoSrc} alt="Your profile photo, full preview" />}
+          {photoSrc && <Image unoptimized width={480} height={480} className="photo-preview" src={photoSrc} alt={ui("Your profile photo, full preview")} />}
           <div className="photo-dialog-actions">
-            <button type="button" className="button" onClick={choosePhoto} disabled={busy}>Change photo</button>
-            <button type="button" className="text-button" onClick={downloadPhoto} disabled={downloading || !photoSrc}>{downloading ? "Downloading…" : "Download image"}</button>
+            <button type="button" className="button" onClick={choosePhoto} disabled={busy}><T text="Change photo"/></button>
+            <button type="button" className="text-button" onClick={downloadPhoto} disabled={downloading || !photoSrc}>{downloading ? <T text="Downloading…"/> : <T text="Download image"/>}</button>
           </div>
-          <p className="small" role="status">{downloadError || (photoPending ? "Preview only. Save your profile to apply this photo." : "")}</p>
+          <p className="small" role="status">{downloadError || (photoPending ? <T text="Preview only. Save your profile to apply this photo."/> : "")}</p>
         </div>
       </dialog>
       <div className="profile-links">
         {!onboarding && (
-          <Link href="/profile/preferences">Edit learning preferences →</Link>
+          <Link href="/profile/preferences"><T text="Edit learning preferences →"/></Link>
         )}
-        <button className="text-button" onClick={signOut} disabled={busy}>
-          Sign out
-        </button>
+        <button className="text-button" onClick={signOut} disabled={busy}><T text="Sign out"/></button>
       </div>
     </>
   );

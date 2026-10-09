@@ -1,0 +1,29 @@
+name: US market data foundation
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '7 13,21 * * 1-5'
+permissions:
+  contents: read
+concurrency:
+  group: market-data-sync
+  cancel-in-progress: false
+jobs:
+  sync:
+    if: github.event_name == 'workflow_dispatch' || vars.ENABLE_MARKET_SCHEDULE == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run sync:data
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          ALPACA_API_KEY_ID: ${{ secrets.ALPACA_API_KEY_ID }}
+          ALPACA_API_SECRET_KEY: ${{ secrets.ALPACA_API_SECRET_KEY }}
