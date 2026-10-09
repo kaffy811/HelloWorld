@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 
-// Run against a locally started build; no sign-in, provider call or database write.
+// Local or the project's exact Vercel domains; no sign-in or private database writes.
 const origin = process.env.TEST_ORIGIN || "http://127.0.0.1:3100";
-assert.ok(["127.0.0.1", "localhost"].includes(new URL(origin).hostname));
+const target=new URL(origin);
+assert.ok(["127.0.0.1", "localhost"].includes(target.hostname) || (target.protocol==='https:' && (target.hostname==='hello-world-gold-eight.vercel.app' || /^hello-world-[a-z0-9-]+-humor-project8\.vercel\.app$/.test(target.hostname))));
 for (const path of [
   "/api/bookmarks",
   "/api/ai/explain", "/api/ai/chat", "/api/ai/daily", "/api/ai/save", "/api/ai/feedback", "/api/news/refresh",
@@ -72,5 +73,5 @@ assert.equal(
   `${origin}/login?error=callback`,
 );
 console.log(
-  "PASS: local HTTP authentication, origin and safe OAuth-return guards. No database writes.",
+  "PASS: HTTP public pages, authentication, origin and safe OAuth-return guards. No private database writes or Gemini calls.",
 );

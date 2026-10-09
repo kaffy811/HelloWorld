@@ -39,7 +39,7 @@ npm run lint
 npm test
 npm run test:db
 npm run build
-# Run against the local preview, or set TEST_BASE_URL to a public deployment:
+# Run against the local preview, or set TEST_ORIGIN to this project's public deployment:
 npm run test:http
 ```
 
