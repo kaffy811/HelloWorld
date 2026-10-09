@@ -29,3 +29,7 @@ The trigger workflow https://github.com/kaffy811/HelloWorld/actions/runs/3787840
 ## Acceptance
 
 npm test, npm run test:db, npm run lint, npm run build, and TEST_ORIGIN=https://hello-world-gold-eight.vercel.app npm run test:http. Database scenarios verify that new source URLs match their publishers and visitors cannot insert rows. HTTP checks reject missing/forged scheduled credentials. Validate actual BEA/Alpaca imports, source filters, stock News and an AI explanation on a saved summary; inspect the workflow run and source counts.
+
+## AI compatibility
+
+Live BEA testing exposed a pre-existing retry conflict: a rejected first answer immediately retried within the same per-user five-second request gate. The bounded repair now waits only the remaining cooldown, remains separately metered, keeps the same source checks/quotas, and shares a 55-second provider deadline. Reader version v14 invalidates failed older cache identities while preserving saved history. A fake-clock regression exercises the actual cooldown rejection instead of allowing every reservation.
