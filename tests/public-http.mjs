@@ -82,3 +82,8 @@ console.log(
 );
 
 for(const path of ['/auth/verified','/auth/complete']){const r=await fetch(origin+path,{redirect:'manual'});assert.equal(r.status,307,path+' never shows Verified without a real user');assert.equal(new URL(r.headers.get('location'),origin).pathname,'/login');}
+
+const returnPreparation=await fetch(origin+'/auth/return',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify({next:'/notebook'})});
+const preparedCookie=returnPreparation.headers.get('set-cookie').split(';')[0];
+const backgroundHome=await fetch(origin+'/',{headers:{Cookie:preparedCookie}});
+assert.ok(!/learning_return=/i.test(backgroundHome.headers.get('set-cookie')||''),'a homepage request must not erase an in-progress OAuth return path');

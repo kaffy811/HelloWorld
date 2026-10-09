@@ -2,9 +2,7 @@ import {getTranslator} from "@/lib/i18n/server";
 
 import {T} from "@/components/language-provider";
 import Link from "next/link";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { safeReturnPath } from "@/lib/news/validation.mjs";
 import { createClient } from "@/lib/supabase/server";
 import { onboardingDestination } from "@/lib/onboarding";
 import { companies, analyses } from "@/lib/news/data";
@@ -36,10 +34,6 @@ export default async function Home({
     if (!profile) throw new Error("Profile unavailable");
     const destination = onboardingDestination(profile);
     if (destination !== "/") redirect(destination);
-    const next = safeReturnPath(
-      (await cookies()).get("learning_return")?.value,
-    );
-    if (next !== "/") redirect(next);
   }
   const [directory, feed, market, ai, watch] = await Promise.all([
     companies(),

@@ -63,7 +63,9 @@ export function PreferencesForm({
         throw new Error(
           "Your preferences could not be saved. Please try again.",
         );
-      if (onboarding) router.push("/");
+      // Complete the cookie-writing auth Route Handler with a document navigation.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+      if (onboarding) window.location.assign("/auth/complete");
       else {
         setValues(payload);
         setMessage("Learning preferences saved.");

@@ -25,8 +25,6 @@ export async function proxy(request: NextRequest) {
     },
   });
   await supabase.auth.getClaims();
-  if (request.nextUrl.pathname === "/")
-    response.cookies.delete("learning_return");
   response.headers.set("Cache-Control", "private, no-store");
   return response;
 }
