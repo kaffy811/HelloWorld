@@ -810,5 +810,6 @@
   "Sources are temporarily unavailable. Previously saved news remains visible.": "来源暂时无法访问，已保存的资讯仍可阅读。",
   "The update could not finish. Please try again later.": "更新未能完成，请稍后重试。",
   "News was recently checked. Saved news is ready to read.": "资讯刚刚检查过，可以阅读已保存的资讯。",
-  "The answer could not pass the source check. Try a more specific question; no unverified answer was saved.": "回答未通过来源校验，请尝试更具体的问题。未经验证的回答没有保存为生成内容。"
+  "The answer could not pass the source check. Try a more specific question; no unverified answer was saved.": "回答未通过来源校验，请尝试更具体的问题。未经验证的回答没有保存为生成内容。",
+  "Loading conversation…": "正在加载聊天记录…"
 }
