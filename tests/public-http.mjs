@@ -37,6 +37,7 @@ const crossOrigin = await fetch(`${origin}/auth/return`, {
 assert.equal(crossOrigin.status, 403);
 for (const [next, expected] of [
   ["/stocks/AAPL", "/stocks/AAPL"],
+  ["/assistant?chat=12345678-1234-4234-8234-123456789abc", "/assistant?chat=12345678-1234-4234-8234-123456789abc"],
   ["/learning/12345678-1234-4234-8234-123456789abc", "/learning/12345678-1234-4234-8234-123456789abc"],
   ["https://example.invalid", "/"],
 ]) {
@@ -57,7 +58,7 @@ for(const path of ["/stocks/AAPL","/stocks/AAPL/news","/stocks/AAPL/financials",
  const response=await fetch(origin+path);assert.equal(response.status,200,path+" public page");
  const html=await response.text();assert.match(html,/<html[^>]*lang="en"/,path+" defaults to English");assert.ok(!html.includes("Create learning card"),path+" retired learning-card UI");
 }
-for(const path of ["/api/ai/chat", "/api/images?id=11111111-1111-4111-8111-111111111111", "/api/ai/outputs/11111111-1111-4111-8111-111111111111", "/api/ai/conversations/11111111-1111-4111-8111-111111111111"]){const r=await fetch(origin+path);assert.equal(r.status,401,path+" private AI record");}
+for(const path of ["/api/ai/chat", "/api/ai/chat?list=1", "/api/news/refresh", "/api/images?id=11111111-1111-4111-8111-111111111111", "/api/ai/outputs/11111111-1111-4111-8111-111111111111", "/api/ai/conversations/11111111-1111-4111-8111-111111111111"]){const r=await fetch(origin+path);assert.equal(r.status,401,path+" private AI record");}
 const unsupportedChart=await fetch(origin+"/api/stocks/UNKNOWN/chart?range=live");assert.equal(unsupportedChart.status,400);
 const privateNote=await fetch(origin+"/api/notes?id=11111111-1111-4111-8111-111111111111");assert.equal(privateNote.status,401);
 const privateConversation=await fetch(origin+"/api/analyses/11111111-1111-4111-8111-111111111111/export");assert.equal(privateConversation.status,401);
@@ -79,3 +80,5 @@ assert.equal(
 console.log(
   "PASS: HTTP public pages, authentication, origin and safe OAuth-return guards. No private database writes or Gemini calls.",
 );
+
+for(const path of ['/auth/verified','/auth/complete']){const r=await fetch(origin+path,{redirect:'manual'});assert.equal(r.status,307,path+' never shows Verified without a real user');assert.equal(new URL(r.headers.get('location'),origin).pathname,'/login');}

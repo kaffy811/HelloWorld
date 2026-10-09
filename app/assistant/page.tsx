@@ -1,5 +1,6 @@
 import {randomUUID} from 'node:crypto';
+import {redirect,notFound} from 'next/navigation';
 import {createClient} from '@/lib/supabase/server';
-import {ArticleAssistant} from '@/components/article-assistant';
-import {T} from '@/components/language-provider';
-export default async function Assistant(){const s=await createClient(),{data:{user}}=await s.auth.getUser();const signedIn=!!user&&!user.is_anonymous;return <section className="narrow page-heading"><span className="eyebrow">Clearstock AI</span><h1><T text="Your AI assistant"/></h1><p><T text="Bring a question or a screenshot. Save useful conversations to Notebook."/></p><ArticleAssistant source={{kind:'general',id:randomUUID()}} title="Clearstock assistant" signedIn={signedIn} returnPath="/assistant" general initialOpen={signedIn}/></section>;}
+import {AssistantWorkspace} from '@/components/assistant-workspace';
+import {UUID} from '@/lib/news/validation.mjs';
+export default async function Assistant({searchParams}:{searchParams:Promise<{chat?:string}>}){const {chat}=await searchParams;if(chat&&!UUID.test(chat))notFound();const s=await createClient(),{data:{user}}=await s.auth.getUser();if(!user||user.is_anonymous)redirect('/login?next='+encodeURIComponent(chat?'/assistant?chat='+chat:'/assistant'));if(chat){const {data:c}=await s.from('ai_conversations').select('id').eq('id',chat).eq('owner_id',user.id).maybeSingle();if(!c)notFound();}return <AssistantWorkspace conversationId={chat} newSourceId={randomUUID()}/>;}

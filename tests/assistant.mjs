@@ -21,3 +21,13 @@ test('vision request sends verified image bytes while atomic storage keeps promp
  const out=await generateReader({admin,ownerId:'test-owner',kind:'chat',prompt,identity:{},source,question:'Explain the diagram',language:'en',conversation:{id:'conversation-test',revision:0},images:[{inline_data:{mime_type:'image/webp',data:'dGVzdA=='}}],fetcher});assert.equal(out.length,1);assert.equal(completed,true);
  }finally{for(const [k,v] of Object.entries(prior))if(v===undefined)delete process.env[k];else process.env[k]=v;}
 });
+
+test('one source-check repair is metered separately and never saves the unsupported draft',async()=>{
+ const {generateReader}=await import('../lib/ai/generate.mjs');const {readerPrompt}=await import('../lib/ai/prompt.mjs');
+ const prior=Object.fromEntries(['AI_ENABLED','AI_BILLING_MODE','GEMINI_API_KEY','GEMINI_MODEL'].map(k=>[k,process.env[k]]));Object.assign(process.env,{AI_ENABLED:'true',AI_BILLING_MODE:'free',GEMINI_API_KEY:'test-key',GEMINI_MODEL:'test-model'});
+ try{let reservations=0,requests=0,failed=0;const settled=new Set(),source={kind:'article',id:'source-test',title:'Minutes',read_text:'The committee discussed monetary policy.',scope:'Available excerpt',source_url:'/articles/test',evidence:[{id:'source',text:'The committee discussed monetary policy.'}]},prompt=readerPrompt({language:'en',evidence:source.evidence});
+ const admin={rpc:async(name,args)=>{if(name==='reserve_metered_generation'){reservations++;assert.ok(args.p_reserve_cost>=0);return {data:[{run_id:'run-'+reservations}]};}if(name==='settle_ai_usage'){settled.add(args.p_run);return {};}assert.equal(name,'complete_reader_generation');assert.match(args.p_usage.validator_version,/-repair1$/);assert.ok(!args.p_outputs[0].content.answer.includes('5%'));return {data:args.p_outputs};},from:()=>({update:()=>({eq:()=>({eq:async()=>{failed++;return {};}})})})};
+ const fetcher=async()=>{requests++;return Response.json({candidates:[{finishReason:'STOP',content:{parts:[{text:JSON.stringify({title:'Minutes',answer:requests===1?'The interest rate is 5%.':'Minutes explain the discussion behind monetary policy.',citations:['source']})}]}}],usageMetadata:{promptTokenCount:10,candidatesTokenCount:10,totalTokenCount:20}});};
+ const result=await generateReader({admin,ownerId:'test-owner',kind:'chat',prompt,identity:{},source,fetcher});assert.equal(reservations,2);assert.equal(requests,2);assert.equal(failed,1);assert.equal(settled.size,2);assert.equal(result.length,1);
+ }finally{for(const [k,v] of Object.entries(prior))if(v===undefined)delete process.env[k];else process.env[k]=v;}
+});
