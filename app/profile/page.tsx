@@ -15,7 +15,6 @@ export default async function Profile() {
       <h1><T text="Your space, your name."/></h1>
       <p><T text="Update your profile or edit your learning preferences below."/></p>
       <ProfileForm
-        userId={user.id}
         email={user.email ?? ""}
         displayName={profile.display_name ?? ""}
         firstName={profile.first_name ?? ""}

@@ -8,8 +8,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import {prepareProfilePhoto} from "@/lib/profile-photo";
 export function ProfileForm({
-  userId,
   email,
   displayName,
   firstName,
@@ -17,7 +17,6 @@ export function ProfileForm({
   avatarUrl,
   onboarding = false,
 }: {
-  userId: string;
   email: string;
   displayName: string;
   firstName: string;
@@ -34,6 +33,7 @@ export function ProfileForm({
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [photoPending, setPhotoPending] = useState(false);
+  const [preparingPhoto, setPreparingPhoto] = useState(false);
   const [downloadError, setDownloadError] = useState("");
   const [downloading, setDownloading] = useState(false);
   useEffect(() => {
@@ -44,19 +44,24 @@ export function ProfileForm({
     photoDialog.current?.close();
     photoInput.current?.click();
   }
-  function selectPhoto(event: ChangeEvent<HTMLInputElement>) {
+  async function selectPhoto(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
     event.target.value = "";
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || !file.size || file.size > 2 * 1024 * 1024) {
-      setMessage("Choose a JPG, PNG or WebP photo up to 2 MB.");
-      return;
-    }
-    setPreviewUrl(URL.createObjectURL(file));
-    setSelectedPhoto(file);
-    setPhotoPending(true);
+    setPreparingPhoto(true);
     setMessage("");
-    setDownloadError("");
+    try {
+      const photo = await prepareProfilePhoto(file);
+      setPreviewUrl(URL.createObjectURL(photo));
+      setSelectedPhoto(photo);
+      setPhotoPending(true);
+      setDownloadError("");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Please try again.");
+    } finally { setPreparingPhoto(false); }
+  }
+  function cancelPhoto() {
+    setPreviewUrl(""); setSelectedPhoto(null); setPhotoPending(false); setMessage("");
   }
   async function downloadPhoto() {
     setDownloading(true);
@@ -92,52 +97,22 @@ export function ProfileForm({
     const display = String(form.get("display_name") ?? "").trim();
     const first = String(form.get("first_name") ?? "").trim();
     const last = String(form.get("last_name") ?? "").trim();
-    const supabase = createClient();
-    let uploadedPath: string | null = null;
     try {
       if (!display || display.length > 40)
         throw new Error("Enter a display name of 1–40 characters.");
       if (!first || !last || first.length > 80 || last.length > 80)
         throw new Error("Enter both names, up to 80 characters each.");
-      const file = photoPending ? selectedPhoto : null;
-      if (file instanceof File && file.size) {
-        const extensions: Record<string, string> = {
-          "image/jpeg": "jpg",
-          "image/png": "png",
-          "image/webp": "webp",
-        };
-        if (!extensions[file.type] || file.size > 2 * 1024 * 1024)
-          throw new Error("Choose a JPG, PNG or WebP photo smaller than 2 MB.");
-        const path = `${userId}/${crypto.randomUUID()}.${extensions[file.type]}`;
-        const { error } = await supabase.storage
-          .from("avatars")
-          .upload(path, file, { contentType: file.type });
-        if (error)
-          throw new Error(
-            "Photo upload failed. Please retry, or continue without a photo.",
-          );
-        uploadedPath = path;
-      }
-      const { data, error } = await supabase
-        .from("profiles")
-        .update({
-          display_name: display,
-          first_name: first,
-          last_name: last,
-          ...(uploadedPath ? { avatar_path: uploadedPath } : {}),
-        })
-        .eq("id", userId)
-        .select("id")
-        .single();
-      if (error || !data)
-        throw new Error("Your profile could not be saved. Please retry.");
+      const payload = new FormData();
+      payload.set("display_name", display); payload.set("first_name", first); payload.set("last_name", last);
+      if (photoPending && selectedPhoto) payload.set("photo", selectedPhoto);
+      const response = await fetch('/api/profile', {method: 'POST', body: payload});
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Your profile could not be saved. Please retry.");
       setPhotoPending(false);
       if (onboarding) router.push("/onboarding/preferences");
       else setMessage("Profile saved.");
       router.refresh();
     } catch (error) {
-      if (uploadedPath)
-        await supabase.storage.from("avatars").remove([uploadedPath]);
       setMessage(error instanceof Error ? error.message : "Please try again.");
     } finally {
       setBusy(false);
@@ -157,7 +132,7 @@ export function ProfileForm({
   return (
     <>
       <form onSubmit={save}>
-        <fieldset disabled={busy} className="form-fields">
+        <fieldset disabled={busy || preparingPhoto} className="form-fields">
           <div className="avatar-row">
             <button type="button" className="avatar-trigger" aria-label={photoSrc ? "View profile photo" : "Upload profile photo"} onClick={() => photoSrc ? photoDialog.current?.showModal() : choosePhoto()}>
               {photoSrc ? (
@@ -173,11 +148,14 @@ export function ProfileForm({
               <strong><T text="Your account"/></strong>
               <p className="small">{email}</p>
               <button type="button" className="text-button avatar-change" onClick={choosePhoto}>{photoSrc ? <T text="Change photo"/> : <T text="Upload photo"/>}</button>
-              <p className="small"><T text="Optional · JPG, PNG or WebP · Up to 2 MB"/></p>
+              <p className="small"><T text="Optional · JPG, PNG or WebP · Up to 10 MB · Automatically resized"/></p>
+              {message.toLowerCase().includes("photo") && <p className="small" role="alert">{ui(message)}</p>}
+              {preparingPhoto && <p className="photo-pending" role="status"><T text="Preparing photo…"/></p>}
+              {photoPending && <button type="button" className="text-button" onClick={cancelPhoto}><T text="Remove selected photo"/></button>}
               {photoPending && <p className="photo-pending" role="status"><T text="Photo not saved yet. "/>{onboarding ? <T text="Select Next to save."/> : <T text="Select Save profile to save."/>}</p>}
             </div>
           </div>
-          <input ref={photoInput} type="file" hidden accept="image/jpeg,image/png,image/webp" aria-label={ui("Choose profile photo")} onChange={selectPhoto} />
+          <input ref={photoInput} type="file" hidden accept="image/jpeg,image/png,image/webp" aria-label={ui("Choose profile photo")} onChange={event => void selectPhoto(event)} />
           <label><T text="Display name"/><input
               name="display_name"
               defaultValue={displayName}
@@ -206,7 +184,7 @@ export function ProfileForm({
             </label>
           </div>
           <button className="button" type="submit">
-            {busy
+            {preparingPhoto ? <T text="Preparing photo…"/> : busy
               ? <T text="Saving…"/>
               : onboarding
                 ? <T text="Next: learning preferences →"/>

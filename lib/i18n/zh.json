@@ -820,5 +820,12 @@
   "Coverage: SEC company filings, Federal Reserve policy, BLS and BEA economic releases, and Benzinga company-news summaries via Alpaca. Filter by source to compare coverage.": "来源包括 SEC 公司公告、美联储政策、BLS 与 BEA 经济发布，以及通过 Alpaca 获取的 Benzinga 公司新闻摘要。可以按来源筛选。",
   "Benzinga via Alpaca": "Benzinga（通过 Alpaca）",
   "News & filings": "新闻与公告",
-  "Company news summaries and SEC filings, with publication dates and source links.": "公司新闻摘要与 SEC 公告，附发布时间和来源链接。"
+  "Company news summaries and SEC filings, with publication dates and source links.": "公司新闻摘要与 SEC 公告，附发布时间和来源链接。",
+  "Optional · JPG, PNG or WebP · Up to 10 MB · Automatically resized": "可选 · JPG、PNG 或 WebP · 最大 10 MB · 自动压缩",
+  "Preparing photo…": "正在处理头像…",
+  "Remove selected photo": "取消所选头像",
+  "Choose a JPG, PNG or WebP photo up to 10 MB.": "请选择不超过 10 MB 的 JPG、PNG 或 WebP 图片。",
+  "This photo could not be read. Choose a JPG, PNG or WebP image.": "无法读取这张图片，请选择 JPG、PNG 或 WebP 格式。",
+  "Photo upload failed. Retry, or remove the selected photo to continue.": "头像上传失败，请重试；也可以取消所选头像后继续。",
+  "Invalid profile request.": "资料请求无效，请刷新后重试。"
 }

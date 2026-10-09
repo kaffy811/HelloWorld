@@ -7,7 +7,7 @@ assert.ok(["127.0.0.1", "localhost"].includes(target.hostname) || (target.protoc
 for (const path of [
   "/api/bookmarks",
   "/api/ai/explain", "/api/ai/chat", "/api/ai/daily", "/api/ai/save", "/api/ai/feedback", "/api/news/refresh",
-  "/api/notes", "/api/images", "/api/ai/comments",
+  "/api/notes", "/api/images", "/api/ai/comments", "/api/profile",
   "/api/feedback",
   "/api/ratings",
   "/api/watchlist",

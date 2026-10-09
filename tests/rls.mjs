@@ -79,6 +79,23 @@ try {
     );
     assert.equal(rows.length, 0);
   });
+  await check("new users can save only their own profile/avatar; private photos cannot be read or overwritten by others",async()=>{
+    await role('authenticated',u1);
+    await db.query("insert into storage.objects(bucket_id,name) values('avatars',$1)",[u1+'/avatar-test.webp']);
+    await db.query("update public.profiles set display_name='Sam',first_name='Sam',last_name='Learner',avatar_path=$1 where id=$2",[u1+'/avatar-test.webp',u1]);
+    assert.equal((await db.query("select avatar_path from public.profiles where id=$1",[u1])).rows[0].avatar_path,u1+'/avatar-test.webp');
+    await denied("update public.profiles set avatar_path=$1 where id=$2",[u2+'/foreign.webp',u1]);
+    await denied("insert into storage.objects(bucket_id,name) values('avatars',$1)",[u2+'/forged.webp']);
+    await role('authenticated',u2);
+    assert.equal((await db.query("select * from storage.objects where bucket_id='avatars'")).rows.length,0);
+    assert.equal((await db.query("update public.profiles set first_name='forged' where id=$1 returning id",[u1])).rows.length,0);
+    assert.equal((await db.query("delete from storage.objects where bucket_id='avatars' returning id")).rows.length,0);
+    await denied("insert into storage.objects(bucket_id,name) values('avatars',$1)",[u1+'/forged.webp']);
+    await role('anon'); assert.equal((await db.query("select * from storage.objects where bucket_id='avatars'")).rows.length,0);
+    await role('authenticated',u1);
+    await db.query("update public.profiles set display_name=null,first_name=null,last_name=null,avatar_path=null where id=$1",[u1]);
+    await db.query("delete from storage.objects where bucket_id='avatars' and name=$1",[u1+'/avatar-test.webp']);
+  });
   await role("anon");
   await check(
     "anonymous sees public explanation but cannot read private work or prompts",

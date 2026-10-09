@@ -29,7 +29,6 @@ export default async function Onboarding({
       <h1><T text="What should we call you?"/></h1>
       <p><T text="Add your name, and a photo if you like. Your learning preferences come next."/></p>
       <ProfileForm
-        userId={user.id}
         email={user.email ?? ""}
         displayName={profile.display_name ?? ""}
         firstName={profile.first_name ?? ""}
