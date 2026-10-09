@@ -1,3 +1,4 @@
+import {stockReturn} from '@/lib/news/reading.mjs';
 import {getTranslator} from "@/lib/i18n/server";
 
 import {T} from "@/components/language-provider";
@@ -17,11 +18,11 @@ import { ArticleAssistant } from "@/components/article-assistant";
 export async function ExplanationDetail({
   id,
   section,
-  saved = false,
+  saved = false,returnPath,
 }: {
   id: string;
   section: "news" | "learning";
-  saved?: boolean;
+  saved?: boolean;returnPath?:string;
 }) {
  const {t:ui,language}=await getTranslator();
   if (!UUID.test(id)) notFound();
@@ -65,6 +66,7 @@ export async function ExplanationDetail({
   const {data: bookmarks} = user ? await supabase.from("knowledge_bookmarks").select("source_key").eq("user_id",user.id).eq("analysis_id",id) : {data:[]};
   const savedKeys = new Set((bookmarks||[]).map(b=>b.source_key));
   const {data: originalArticle}=a.kind==='news'&&a.news_id?await supabase.from('market_articles').select('id').eq('sec_news_id',a.news_id).limit(1).maybeSingle():{data:null};
+  const from=stockReturn(returnPath,[a.ticker]);
   const c = a.content;
   const count = totals?.[0] || { helpful: 0, unhelpful: 0 };
   function claimSection(title: string, claims: Claim[]) {
@@ -93,7 +95,7 @@ export async function ExplanationDetail({
   return (
     <>
       <div className="breadcrumb">
-        <Link href={a.kind === "news" ? `/stocks/${a.ticker}/news` : a.kind === "followup" ? "/assistant?view=earlier" : "/notebook"}>
+        <Link href={a.kind === "news" ? (from||`/stocks/${a.ticker}/news`) : a.kind === "followup" ? "/assistant?view=earlier" : "/notebook"}>
           {a.kind === "news" ? ui(`${a.ticker} news`) : a.kind === "followup" ? <T text="Chat"/> : <T text="Notebook"/>}
         </Link>
         <span>／</span>
@@ -119,7 +121,7 @@ export async function ExplanationDetail({
               </span>
             </div>
           </header>
-          {originalArticle&&<Link className="source" href={'/articles/'+originalArticle.id}><T text="Read original in Clearstock →"/></Link>}
+          {originalArticle&&<Link className="source" href={'/articles/'+originalArticle.id+(from?'?from='+encodeURIComponent(from):'')}><T text="Read original in Clearstock →"/></Link>}
           <EvidenceContext analysisId={id} ticker={a.ticker} signedIn={Boolean(user)}/><ArticleAssistant source={{kind:"analysis",id}} title={c.headline} signedIn={Boolean(user)} returnPath={detailPath}/>
           <details className="original-ai-version" open={a.language===language}><summary>{ui("Original saved AI version")} · {a.language==='zh-Hans'?'简体中文':'English'}</summary>
           {claimSection("What the source says", c.facts)}

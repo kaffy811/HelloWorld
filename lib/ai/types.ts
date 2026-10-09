@@ -1,4 +1,4 @@
-export type ReaderSource={kind:'analysis'|'article'|'concept'|'lesson'|'stock'|'general';id:string};
+export type ReaderSource={kind:'analysis'|'article'|'filing'|'concept'|'lesson'|'stock'|'general';id:string};
 export type SourceSnapshot={kind:string;id:string;title:string;read_text:string;source_url:string;ticker?:string|null;scope:string;context_version?:string;image_inputs?:{id:string;sha256:string;mime_type:string;width:number;height:number;byte_size:number}[];evidence:{id:string;label:string;text:string;url?:string|null}[]};
 export type AIOutput={id:string;run_id:string;kind:string;content:{title:string;answer:string;citations:string[]};source_snapshot:SourceSnapshot;selected_text?:string;question?:string;conversation_id?:string;topic_key?:string;language:string;created_at:string;score?:number|null;saved?:boolean;validation_error?:string|null};
 export type Conversation={source_kind:ReaderSource['kind'];source_id:string;id:string;title:string;saved:boolean;language:string;revision:number;source_snapshot:SourceSnapshot;updated_at:string};

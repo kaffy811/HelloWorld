@@ -92,7 +92,7 @@ export function StockTable({
     </div>
   );
 }
-export function ArticleList({ items }: { items: Article[] }) {
+export function ArticleList({ items,returnPath }: { items: Article[];returnPath?:string }) {
  const {t:ui,language}=useLanguage();
 
   return (
@@ -108,7 +108,7 @@ export function ArticleList({ items }: { items: Article[] }) {
           <h3>
             <Link
               href={
-                `/articles/${a.id}`
+                `/articles/${a.id}`+(returnPath?"?from="+encodeURIComponent(returnPath):"")
               }
             >
               {a.title}
@@ -126,7 +126,7 @@ export function ArticleList({ items }: { items: Article[] }) {
             <Link
               className="source"
               href={
-                `/articles/${a.id}`
+                `/articles/${a.id}`+(returnPath?"?from="+encodeURIComponent(returnPath):"")
               }
             >
               {a.analysis_id ? <T text="Read with AI context →"/> : <T text="Read update →"/>}

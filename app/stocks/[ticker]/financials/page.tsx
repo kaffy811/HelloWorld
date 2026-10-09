@@ -1,3 +1,5 @@
+import Link from 'next/link';
+import {filingPath} from '@/lib/news/reading.mjs';
 import {TextSelectionHelper} from '@/components/text-selection-helper';
 import {getTranslator} from "@/lib/i18n/server";
 
@@ -67,14 +69,9 @@ export default async function Financials({
                   <td>{money(m?.value, m?.unit)}</td>
                   <td>
                     {m ? (
-                      <a
-                        className="source"
-                        href={m.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {m.form} · {m.filed} ↗
-                      </a>
+                      <Link className="source" href={filingPath(ticker,m.accession)} prefetch={false}>
+                        {m.form} · {m.filed} →
+                      </Link>
                     ) : (
                       <span className="small"><T text="Not reported for this period"/></span>
                     )}
@@ -91,6 +88,7 @@ export default async function Financials({
     <>
       <StockHeader context={context} tab="financials" />
       <section className="content-section" data-readable="true">
+        <p className="reading-tip"><T text="Select an unfamiliar term in the financial summary to ask for an explanation."/></p>
         <div className="section-title">
           <h2><T text="Reported financials"/></h2>
           <span className="pill"><T text="SEC · US GAAP"/></span>
@@ -135,16 +133,11 @@ export default async function Financials({
             .filter((f) => f.form.startsWith("10-"))
             .slice(0, 10)
             .map((f) => (
-              <a
-                key={f.accession}
-                href={f.url}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <Link key={f.accession} href={filingPath(ticker,f.accession)} prefetch={false}>
                 <strong>{f.form}</strong>
                 <span><T text="Period ended "/>{f.period || "not specified"}</span>
-                <span className="small"><T text="Filed "/>{f.date} ↗</span>
-              </a>
+                <span className="small"><T text="Filed "/>{f.date} →</span>
+              </Link>
             ))}
         </div>
       </section>

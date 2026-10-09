@@ -34,7 +34,7 @@ export default async function CompanyNews({
           <p className="section-description"><T text="AI explanations of this company’s official SEC filings. Open one to explore the source, ask questions and rate the explanation."/></p>
           <div className="news-grid">
             {ai.data.slice(0,2).map((a) => (
-              <NewsCard key={a.id} analysis={a} />
+              <NewsCard key={a.id} analysis={a} returnPath={"/stocks/"+ticker+"/news"} />
             ))}
           </div>
         </section>
@@ -46,7 +46,7 @@ export default async function CompanyNews({
         </div>
         <p className="section-description"><T text="Company news summaries and SEC filings, with publication dates and source links."/></p>
         {feed.data.length ? (
-          <ArticleList items={feed.data} />
+          <ArticleList items={feed.data} returnPath={"/stocks/"+ticker+"/news"} />
         ) : (
           <div className="panel">
             {feed.error

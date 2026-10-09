@@ -17,7 +17,7 @@ export const articles = cache(
     const s = await createClient();
     let q = s
       .from("market_articles")
-      .select("*", { count: "exact" })
+      .select("id,title,excerpt,source,source_key,source_url,category,topic,sector,tickers,published_at,sec_news_id", { count: "exact" })
       .order("published_at", { ascending: false })
       .range((page - 1) * 30, page * 30 - 1);
     if (ticker) q = q.contains("tickers", [ticker]);

@@ -648,3 +648,9 @@ footer{padding-right:104px}.feedback-confirmation h2{font-size:36px;line-height:
 
 .vocabulary-search .search-bar .button { white-space: nowrap; flex-shrink: 0; }
 .vocabulary-search .search-bar input { min-width: 0; }
+
+.reading-tip {padding:12px 16px;border-left:3px solid var(--accent, #246b59);border-radius:8px;background:#eaf2ee;color:#245f50;font-size:.9rem;line-height:1.6;margin:0 0 20px;}
+.vocabulary-back {margin:16px 0 12px;}
+.compact-search input {min-width:0;flex:1;}
+.compact-search button {white-space:nowrap;flex-shrink:0;}
+.ai-lesson-grid .ai-output-footer, .chat-answer .ai-output-footer {justify-content:flex-end;}

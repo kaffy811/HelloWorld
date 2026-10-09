@@ -23,8 +23,3 @@ export function NoteEditor({note}:{note?:PersonalNote}) {
  {status&&<p role="status">{ui(status)}</p>}{error&&<p role="alert" className="notice preference-note">{ui(error)}</p>}
  </form>;
 }
-export function ArchiveNote({id,version,archived=false}:{id:string;version:number;archived?:boolean}){
- const {t:ui}=useLanguage();
- const router=useRouter(),[busy,setBusy]=useState(false),[error,setError]=useState('');
- return <span><button className="text-button" disabled={busy} onClick={async()=>{setBusy(true);setError('');try{const r=await fetch('/api/notes',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,version,archive:!archived})});const d=await r.json();if(!r.ok)throw new Error(d.error);router.refresh();}catch(e){setError((e as Error).message);}finally{setBusy(false);}}}>{busy?<T text="Saving…"/>:archived?<T text="Restore"/>:<T text="Archive"/>}</button>{error&&<p className="small" role="alert">{ui(error)}</p>}</span>;
-}

@@ -4,10 +4,10 @@ import {T} from "@/components/language-provider";
 import Link from "next/link";
 import type { Analysis } from "@/lib/news/types";
 import { easternDate, impactLabels } from "@/lib/news/data";
-export async function NewsCard({ analysis, saved = false }: { analysis: Analysis; saved?: boolean }) {
+export async function NewsCard({ analysis, saved = false,returnPath }: { analysis: Analysis; saved?: boolean;returnPath?:string }) {
   const {language,t}=await getTranslator();
   if (analysis.kind === "material") return null;
-  const href = `/${analysis.kind === "news" ? "news" : "learning"}/${analysis.id}`;
+  const href = `/${analysis.kind === "news" ? "news" : "learning"}/${analysis.id}`+(returnPath?"?from="+encodeURIComponent(returnPath):"");
   return (
     <article className={`panel news-card ${saved ? "newly-saved" : ""}`}>
       {saved && <span className="saved-label"><T text="Just saved"/></span>}

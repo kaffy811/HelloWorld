@@ -12,5 +12,5 @@ export default async function Note({params}:{params:Promise<{id:string}>}) {
  const {data,error}=id==='new'?{data:undefined,error:null}:await supabase.from('personal_notes').select('*').eq('id',id).eq('user_id',user.id).maybeSingle();
  if(error)return <div className="panel notice"><T text="Your notes are temporarily unavailable."/></div>;
  if(id!=='new'&&!data)notFound();
- return <><section className="page-heading"><Link className="source" href="/notebook?kind=notes"><T text="← My notes"/></Link><h1>{id==='new'?<T text="A space for your own thinking."/>:<T text="Edit your note."/>}</h1><p><T text="Your observations and study notes stay private. They are your writing."/></p></section>{data?.archived_at&&<p className="notice preference-note"><T text="This note is archived. Restore it from My notes to return it to your collection."/></p>}<NoteEditor note={data}/></>;
+ return <><section className="page-heading"><Link className="source" href="/notebook?kind=notes"><T text="← My notes"/></Link><h1>{id==='new'?<T text="A space for your own thinking."/>:<T text="Edit your note."/>}</h1><p><T text="Your observations and study notes stay private. They are your writing."/></p></section><NoteEditor note={data}/></>;
 }

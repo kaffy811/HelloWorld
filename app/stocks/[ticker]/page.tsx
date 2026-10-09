@@ -83,14 +83,13 @@ export default async function Stock({
           </dl>
         </div>
       </section>
-      <section className="panel learning-practice"><span className="eyebrow"><T text="LEARN FROM THIS COMPANY"/></span><h2><T text="Three terms to read these figures"/></h2><p><T text="Start with revenue, earnings per share and cash flow. Select an unfamiliar term in the financial snapshot to ask for an explanation."/></p><div className="practice-links"><Link className="source" href="/learn/revenue-profit"><T text="Revenue and profit"/> →</Link><Link className="source" href="/learn/eps"><T text="Diluted EPS"/> →</Link><Link className="source" href="/learn/cash-flow"><T text="Operating cash flow"/> →</Link></div></section>
       <section className="content-section">
         <div className="section-title">
           <h2><T text="Latest company news"/></h2>
           <Link className="source" href={`/stocks/${ticker}/news`}><T text="View all →"/></Link>
         </div>
         {feed.data.length ? (
-          <ArticleList items={feed.data.slice(0, 2)} />
+          <ArticleList items={feed.data.slice(0, 2)} returnPath={"/stocks/"+ticker} />
         ) : (
           <div className="panel">
             {feed.error

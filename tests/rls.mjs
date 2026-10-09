@@ -43,6 +43,11 @@ try {
    for(const reader of ['anon','authenticated']){await role(reader);assert.equal((await db.query("select id from public.market_articles")).rows.length,2);await denied("insert into public.market_articles(source_key,title,source,source_url,category,published_at) values('forged','Fake','BEA','https://www.bea.gov/news/forged','market',now())");}
    await db.exec('reset role;');
   });
+  await check("original article bodies remain public-read and server-write, with bounded plain text",async()=>{
+   await role('service_role');await db.query("update public.market_articles set body_text='Official body text' where source_key='alpaca:42'");
+   await role('anon');assert.equal((await db.query("select body_text from public.market_articles where source_key='alpaca:42'")).rows[0].body_text,'Official body text');await denied("update public.market_articles set body_text='forged'");
+   await role('authenticated',u1);await denied("update public.market_articles set body_text='forged'");await role('service_role');await denied("update public.market_articles set body_text=repeat('x',200001)");await db.exec('reset role;');
+  });
   await check(
     "repeated migration is rejected before changing the existing schema",
     async () => {

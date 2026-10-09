@@ -63,6 +63,8 @@ export type Article = {
   id: string;
   title: string;
   excerpt: string;
+  source_key?:string;
+  body_text?:string|null;
   source: string;
   source_url: string;
   category: string;

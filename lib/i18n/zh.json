@@ -945,5 +945,14 @@
   "Original text pages": "原文分页",
   "Read original in Clearstock →": "在站内阅读原文 →",
   "Coverage: SEC company filings, Federal Reserve policy, BLS and BEA economic releases, and Benzinga company-news summaries via Alpaca.": "来源包括 SEC 公司公告、美联储政策、BLS 与 BEA 经济发布，以及通过 Alpaca 获取的 Benzinga 公司新闻摘要。",
-  "You have explored almost every topic in this library. Review Terms while we add more topics.": "你已学习词库中的大部分主题。可先复习收藏的术语，我们会继续增加内容。"
+  "You have explored almost every topic in this library. Review Terms while we add more topics.": "你已学习词库中的大部分主题。可先复习收藏的术语，我们会继续增加内容。",
+  "← Back to today’s words": "← 返回今日词汇",
+  "Back to stock": "返回股票页面",
+  "Source website ↗": "来源网站 ↗",
+  "Select an unfamiliar term in the financial summary to ask for an explanation.": "选中财务摘要中不懂的词，就能提问获取讲解。",
+  "The original report could not be loaded. Please retry; the financial summary is not the full report.": "暂时无法载入原始公告，请重试；财务摘要并非完整公告。",
+  "The original article could not be loaded. Please retry; this is a source summary only.": "暂时无法载入新闻原文，请重试；下方仅为来源摘要。",
+  "Ask a question about stocks or any everyday topic. Current facts need a source; the assistant does not browse.": "你可以问股票知识或日常问题。最新事实需要可靠来源，助手目前不联网搜索。",
+  "Type your question…": "输入你的问题……",
+  "Image uploads are not supported in chat. Please type your question.": "聊天暂不支持图片，请输入文字问题。"
 }

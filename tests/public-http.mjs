@@ -103,7 +103,8 @@ const chatRedirect=await fetch(origin+'/assistant?view=earlier',{redirect:'manua
 const stockSearch=await (await fetch(origin+'/stocks?q=AAPL')).text();assert.match(stockSearch,/href="\/stocks\/AAPL"/);assert.ok(!stockSearch.includes('href="/stocks/COST"'));
 const emptyStocks=await (await fetch(origin+'/stocks?q=NOTACOMPANY731')).text();assert.match(emptyStocks,/No companies match these filters/);
 const signedOutWatch=await (await fetch(origin+'/stocks?view=watchlist')).text();assert.match(signedOutWatch,/Sign in to follow companies/);
-const stockHTML=await (await fetch(origin+'/stocks/AAPL')).text();assert.ok(!stockHTML.includes('Visible range start'));assert.ok(!stockHTML.includes('Visible range end'));assert.match(stockHTML,/Three terms to read these figures/);
+const stockHTML=await (await fetch(origin+'/stocks/AAPL')).text();assert.ok(!stockHTML.includes('Visible range start'));assert.ok(!stockHTML.includes('Visible range end'));assert.ok(!stockHTML.includes("Three terms to read these figures"));
+const financialHTML=await (await fetch(origin+"/stocks/AAPL/financials")).text();assert.match(financialHTML,/Select an unfamiliar term in the financial summary/);assert.match(financialHTML,/href="\/stocks\/AAPL\/filings\//);
 const companyNewsHTML=await (await fetch(origin+'/stocks/AAPL/news')).text();assert.ok(!companyNewsHTML.includes('News &amp; filings'));
 console.log('PASS: learning-first home, directory search, private watchlist filter, retained detail routes and retired controls.');
 
@@ -118,3 +119,12 @@ const badVocab=await fetch(origin+'/api/vocabulary?term='+encodeURIComponent('x'
 const filtersHTML=await (await fetch(origin+'/news?source=sec')).text();assert.ok(!filtersHTML.includes('name="source"'));
 assert.match(homeHTML,/Explain a financial word or sentence/);assert.match(homeHTML,/Financial vocabulary only/);
 console.log('PASS: financial-only lookup, anonymous glossary access, authenticated AI boundary and removed source filter.');
+
+// Stored public source fixtures: provider original, SEC original and origin-aware back navigation.
+const originalNews=await (await fetch(origin+'/articles/c811fdc5-0de9-440e-b74d-c1b6428c962e?from=%2Fstocks%2FAAPL')).text();
+assert.match(originalNews,/ORIGINAL SOURCE TEXT/);assert.match(originalNews,/Counterpoint Research/);assert.match(originalNews,/OLED Gains Ground/);assert.match(originalNews.match(/<div class="breadcrumb">[\s\S]*?<\/div>/)?.[0]||'',/href="\/stocks\/AAPL"/);assert.ok(!originalNews.includes('source summary only'));
+const originalFiling=await (await fetch(origin+'/stocks/AAPL/filings/0000320193-26-000020')).text();assert.match(originalFiling,/ORIGINAL SOURCE TEXT/);assert.match(originalFiling,/UNITED STATES/);assert.match(originalFiling,/href="\/stocks\/AAPL\/financials"/);assert.match(originalFiling,/\?part=2/);
+const laterFiling=await (await fetch(origin+'/stocks/AAPL/filings/0000320193-26-000020?part=2')).text();assert.match(laterFiling,/ORIGINAL SOURCE TEXT/);assert.ok(laterFiling!==originalFiling);
+const invalidFiling=await fetch(origin+'/stocks/AAPL/filings/0000000000-00-000001');assert.equal(invalidFiling.status,404);
+const hostileReturn=await (await fetch(origin+'/articles/c811fdc5-0de9-440e-b74d-c1b6428c962e?from=https%3A%2F%2Fevil.invalid')).text();assert.ok(!hostileReturn.includes('href="https://evil.invalid"'));
+console.log('PASS: provider news and paginated SEC originals are readable in-site; stock return is retained; unknown reports and unsafe return links are rejected.');
