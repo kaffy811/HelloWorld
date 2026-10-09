@@ -1,20 +1,30 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createServerClient } from "@supabase/ssr";
+import { config } from "@/lib/supabase/config";
+import { routeCookies } from "@/lib/supabase/route-cookies.mjs";
 import { safeReturnPath, requestOrigin } from "@/lib/news/validation.mjs";
 import { onboardingDestination } from "@/lib/onboarding";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const origin = requestOrigin(request);
   const code = url.searchParams.get("code");
-  const next = safeReturnPath((await cookies()).get("learning_return")?.value);
+  const store = await cookies();
+  const next = safeReturnPath(store.get("learning_return")?.value);
+  const sessionCookies = routeCookies(store.getAll());
   if (code) {
-    const supabase = await createClient();
+    const { url: supabaseUrl, key } = config();
+    const supabase = createServerClient(supabaseUrl, key, { cookies: sessionCookies.cookies });
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       const {
         data: { user },
+        error: userError,
       } = await supabase.auth.getUser();
+      if (!user) {
+        console.warn("auth_callback_failed", { stage: "user", code: userError?.code, status: userError?.status });
+        return sessionCookies.finish(NextResponse.redirect(new URL("/login?error=callback", origin)));
+      }
       const { data: profile } = user
         ? await supabase
             .from("profiles")
@@ -37,8 +47,9 @@ export async function GET(request: Request) {
           maxAge: 1800,
           path: "/",
         });
-      return response;
+      return sessionCookies.finish(response);
     }
+    console.warn("auth_callback_failed", { stage: "exchange", code: error.code, status: error.status });
   }
-  return NextResponse.redirect(new URL("/login?error=callback", origin));
+  return sessionCookies.finish(NextResponse.redirect(new URL("/login?error=callback", origin)));
 }

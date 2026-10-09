@@ -67,6 +67,10 @@ const prompt = await fetch(
 );
 assert.equal(prompt.status, 401);
 const callback = await fetch(`${origin}/auth/callback`, { redirect: "manual" });
+assert.match(callback.headers.get('cache-control'), /no-store/);
+const fallback = await fetch(`${origin}/?code=oauth-routing-test`, { redirect: "manual" });
+assert.equal(fallback.status, 307);
+assert.equal(fallback.headers.get('location'), `${origin}/auth/callback?code=oauth-routing-test`);
 assert.equal(callback.status, 307);
 assert.equal(
   callback.headers.get("location"),
