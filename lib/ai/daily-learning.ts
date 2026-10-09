@@ -9,7 +9,7 @@ export async function dailyLearning(ownerId:string|undefined,day:string,language
   s.from('knowledge_bookmarks').select('ai_output_id').eq('user_id',ownerId).order('created_at',{ascending:false}).limit(200)
  ]);
  let error=!!batch.error||!!stars.error;
- if(!batch.data?.run_id||batch.data.item_count!==6)return {lessons:[] as AIOutput[],error};
+ if(!batch.data?.run_id)return {lessons:[] as AIOutput[],error};
  const result=await s.from('ai_outputs').select('*').eq('owner_id',ownerId).eq('kind','lesson').eq('run_id',batch.data.run_id).order('slot');
  error=error||!!result.error;
  const lessons=(result.data||[]) as AIOutput[];
