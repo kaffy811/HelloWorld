@@ -28,10 +28,21 @@ export default async function CompanyNews({
   return (
     <>
       <StockHeader context={context} tab="news" />
+      {ai.data.length > 0 && (
+        <section className="content-section">
+          <h2><T text="Company filings · AI explained"/></h2>
+          <p className="section-description"><T text="AI explanations of this company’s official SEC filings. Open one to explore the source, ask questions and rate the explanation."/></p>
+          <div className="news-grid">
+            {ai.data.slice(0,2).map((a) => (
+              <NewsCard key={a.id} analysis={a} />
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className="content-section">
         <div className="section-title">
           <h2><T text="Company updates"/></h2>
-          <span className="pill"><T text="News & filings"/></span>
         </div>
         <p className="section-description"><T text="Company news summaries and SEC filings, with publication dates and source links."/></p>
         {feed.data.length ? (
@@ -52,16 +63,6 @@ export default async function CompanyNews({
           )}
         </nav>
       </section>
-      {ai.data.length > 0 && (
-        <section className="content-section">
-          <h2><T text="With AI explanations"/></h2>
-          <div className="news-grid">
-            {ai.data.map((a) => (
-              <NewsCard key={a.id} analysis={a} />
-            ))}
-          </div>
-        </section>
-      )}
     </>
   );
 }

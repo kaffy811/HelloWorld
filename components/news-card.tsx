@@ -50,7 +50,7 @@ export function NewsEmpty({ unavailable = false }: { unavailable?: boolean }) {
           ? <T text="Please try again later. Company introductions and the learning library are still available."/>
           : <T text="Source-grounded explanations will appear here after analysis is complete. Explore a US company or learn a stock-market concept while you wait."/>}
       </p>
-      <Link className="text-link" href="/learn"><T text="Explore the learning library →"/></Link>
+      <Link className="text-link" href="/#today"><T text="Explore the learning library →"/></Link>
     </div>
   );
 }

@@ -48,7 +48,7 @@ export async function StockHeader({
   return (
     <>
       <div className="breadcrumb">
-        <Link href="/#companies"><T text="US stocks"/></Link>
+        <Link href="/stocks"><T text="US stocks"/></Link>
         <span>／</span>
         {c.ticker}
       </div>

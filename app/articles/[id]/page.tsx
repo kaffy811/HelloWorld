@@ -42,7 +42,7 @@ export default async function ArticleDetail({
   return (
     <>
       <div className="breadcrumb">
-        <Link href="/#today"><T text="News"/></Link>
+        <Link href="/news"><T text="News"/></Link>
         <span>／</span>
         {a.source}
       </div>
@@ -69,7 +69,7 @@ export default async function ArticleDetail({
         <section className="panel">
           <h2><T text="Source first"/></h2>
           <p><T text="This page contains the available source title and excerpt. AI explains that saved context; read the original report for the full document."/></p>
-          <Link className="source" href="/#today"><T text="Browse more news →"/></Link>
+          <Link className="source" href="/news"><T text="Browse more news →"/></Link>
         </section>
       </article>
       <TextSelectionHelper source={{kind:"article",id}} choices={concepts.map(c=>({text:c.term,definition:c.definition,selection:{concept:c.key},provenance:"Learning library"}))} signedIn={Boolean(user)} returnPath={"/articles/"+id}/>

@@ -54,7 +54,7 @@ for (const [next, expected] of [
   assert.match(cookie, /HttpOnly/i);
   assert.match(cookie, /SameSite=lax/i);
 }
-for(const path of ["/stocks/AAPL","/stocks/AAPL/news","/stocks/AAPL/financials","/learn","/learn/eps","/feedback","/news","/news?category=policy&period=7d","/"]){
+for(const path of ["/stocks","/stocks/AAPL","/stocks/AAPL/news","/stocks/AAPL/financials","/learn","/learn/eps","/feedback","/news","/news?category=policy&period=7d","/"]){
  const response=await fetch(origin+path);assert.equal(response.status,200,path+" public page");
  const html=await response.text();assert.match(html,/<html[^>]*lang="en"/,path+" defaults to English");assert.ok(!html.includes("Create learning card"),path+" retired learning-card UI");
 }
@@ -89,3 +89,21 @@ const backgroundHome=await fetch(origin+'/',{headers:{Cookie:preparedCookie}});
 assert.ok(!/learning_return=/i.test(backgroundHome.headers.get('set-cookie')||''),'a homepage request must not erase an in-progress OAuth return path');
 
 for(const authorization of ['', 'Bearer invalid']){const r=await fetch(origin+'/api/news/scheduled',{method:'POST',headers:{Authorization:authorization}});assert.equal(r.status,401,'scheduled importer must reject missing or forged token');}
+
+// Navigation consolidation and combined stock filters: read-only, no model calls.
+for(const [path,destination] of [['/learn','/#today'],['/learn?view=saved','/notebook?kind=lessons'],['/watchlist','/stocks?view=watchlist']]){
+ const r=await fetch(origin+path,{redirect:'manual'});assert.equal(r.status,307,path);assert.equal(new URL(r.headers.get('location'),origin).href,origin+destination);
+}
+const homeHTML=await (await fetch(origin+'/')).text();
+assert.match(homeHTML,/Your five ideas for today/);assert.ok(!homeHTML.includes('Understand company updates'));assert.ok(!homeHTML.includes('Find a stock or news topic'));
+const termSearch=await (await fetch(origin+'/?q=EPS')).text();assert.match(termSearch,/Financial terms/);assert.match(termSearch,/href="\/learn\/eps"/);
+const stockSearch=await (await fetch(origin+'/stocks?q=AAPL')).text();assert.match(stockSearch,/href="\/stocks\/AAPL"/);assert.ok(!stockSearch.includes('href="/stocks/COST"'));
+const emptyStocks=await (await fetch(origin+'/stocks?q=NOTACOMPANY731')).text();assert.match(emptyStocks,/No companies match these filters/);
+const signedOutWatch=await (await fetch(origin+'/stocks?view=watchlist')).text();assert.match(signedOutWatch,/Sign in to follow companies/);
+const stockHTML=await (await fetch(origin+'/stocks/AAPL')).text();assert.ok(!stockHTML.includes('Visible range start'));assert.ok(!stockHTML.includes('Visible range end'));assert.match(stockHTML,/Three terms to read these figures/);
+const companyNewsHTML=await (await fetch(origin+'/stocks/AAPL/news')).text();assert.ok(!companyNewsHTML.includes('News &amp; filings'));
+console.log('PASS: learning-first home, directory search, private watchlist filter, retained detail routes and retired controls.');
+
+const techStocks=await (await fetch(origin+'/stocks?sector=Consumer%20technology')).text();assert.match(techStocks,/href="\/stocks\/AAPL"/);assert.ok(!techStocks.includes('href="/stocks/MSFT"'));
+const conflictingFilters=await (await fetch(origin+'/stocks?sector=Consumer%20technology&q=MSFT')).text();assert.match(conflictingFilters,/No companies match these filters/);
+const chineseTerms=await (await fetch(origin+'/?q='+encodeURIComponent('现金流'),{headers:{Cookie:'clearstock_language=zh-Hans'}})).text();assert.match(chineseTerms,/href="\/learn\/cash-flow"/);assert.match(chineseTerms,/查找金融词汇或公司/);

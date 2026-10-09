@@ -30,9 +30,8 @@ export default async function RootLayout({
           </Link>
           <nav aria-label={ui("Main navigation")}>
             <Link href="/"><T text="Today"/></Link>
+            <Link href="/stocks"><T text="Stocks"/></Link>
             <Link href="/news"><T text="News"/></Link>
-            <Link href="/watchlist"><T text="Watchlist"/></Link>
-            <Link href="/learn"><T text="Learn"/></Link>
             <Link href="/notebook"><T text="Notebook"/></Link>
             <AccountNav />
           </nav>
