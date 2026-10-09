@@ -96,7 +96,10 @@ for(const [path,destination] of [['/learn','/#today'],['/learn?view=saved','/not
 }
 const homeHTML=await (await fetch(origin+'/')).text();
 assert.match(homeHTML,/Your five ideas for today/);assert.ok(!homeHTML.includes('Understand company updates'));assert.ok(!homeHTML.includes('Find a stock or news topic'));
-const termSearch=await (await fetch(origin+'/?q=EPS')).text();assert.match(termSearch,/Financial terms/);assert.match(termSearch,/href="\/learn\/eps"/);
+assert.ok(!homeHTML.includes('learning-search'));
+const staleSearch=await (await fetch(origin+'/?q=EPS')).text();assert.match(staleSearch,/Your five ideas for today/);assert.ok(!staleSearch.includes('Search results'));
+const lessonHTML=await (await fetch(origin+'/learn/eps')).text();assert.ok(!lessonHTML.includes('Explain article'));assert.ok(!lessonHTML.includes('Learning source'));assert.ok(!lessonHTML.includes('TRY IT IN A REAL COMPANY'));assert.match(lessonHTML,/CHECK YOUR UNDERSTANDING/);
+const chatRedirect=await fetch(origin+'/assistant?view=earlier',{redirect:'manual'});assert.equal(chatRedirect.status,307);assert.match(chatRedirect.headers.get('location'),/login/);
 const stockSearch=await (await fetch(origin+'/stocks?q=AAPL')).text();assert.match(stockSearch,/href="\/stocks\/AAPL"/);assert.ok(!stockSearch.includes('href="/stocks/COST"'));
 const emptyStocks=await (await fetch(origin+'/stocks?q=NOTACOMPANY731')).text();assert.match(emptyStocks,/No companies match these filters/);
 const signedOutWatch=await (await fetch(origin+'/stocks?view=watchlist')).text();assert.match(signedOutWatch,/Sign in to follow companies/);
@@ -106,4 +109,4 @@ console.log('PASS: learning-first home, directory search, private watchlist filt
 
 const techStocks=await (await fetch(origin+'/stocks?sector=Consumer%20technology')).text();assert.match(techStocks,/href="\/stocks\/AAPL"/);assert.ok(!techStocks.includes('href="/stocks/MSFT"'));
 const conflictingFilters=await (await fetch(origin+'/stocks?sector=Consumer%20technology&q=MSFT')).text();assert.match(conflictingFilters,/No companies match these filters/);
-const chineseTerms=await (await fetch(origin+'/?q='+encodeURIComponent('现金流'),{headers:{Cookie:'clearstock_language=zh-Hans'}})).text();assert.match(chineseTerms,/href="\/learn\/cash-flow"/);assert.match(chineseTerms,/查找金融词汇或公司/);
+const chineseTerms=await (await fetch(origin+'/?q='+encodeURIComponent('现金流'),{headers:{Cookie:'clearstock_language=zh-Hans'}})).text();assert.match(chineseTerms,/href="\/learn\/cash-flow"/);assert.ok(!chineseTerms.includes('learning-search'));assert.match(chineseTerms,/今日五个学习主题/);

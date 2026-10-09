@@ -908,5 +908,20 @@
   "Star an idea on Today to keep it in Notebook.": "在 Today 首页给知识点加星，就能保存到 Notebook。",
   "All your saved knowledge lives here: terms, learning articles, conversations and your own notes. Stock stars live in Stocks.": "所有知识收藏都在这里：术语、学习文章、聊天和自己的笔记。股票星标请到 Stocks 股票页的自选筛选查看。",
   "{count} company": "{count} 家公司",
-  "AI explanations of this company’s official SEC filings. Open one to explore the source, ask questions and rate the explanation.": "AI 对这家公司 SEC 官方公告的讲解。打开卡片可查阅来源、继续提问并评分。"
+  "AI explanations of this company’s official SEC filings. Open one to explore the source, ask questions and rate the explanation.": "AI 对这家公司 SEC 官方公告的讲解。打开卡片可查阅来源、继续提问并评分。",
+  "Terms, learning articles and your own notes live here. Conversations are saved automatically in Chat.": "术语、学习文章和自己的笔记保存在这里；聊天记录自动保存在 Chat。",
+  "Save knowledge here. Continue conversations in Chat.": "在这里保存知识，在 Chat 中继续聊天。",
+  "Save a term or learning article to Notebook. Your own notes are kept here too.": "将术语或学习文章存入 Notebook；自己的笔记也保存在这里。",
+  "Open Chat →": "打开 Chat →",
+  "Open in Chat ↗": "在 Chat 中打开 ↗",
+  "Open Chat": "打开聊天",
+  "Chat": "聊天",
+  "Chat history is saved automatically in Chat.": "聊天记录自动保存在 Chat 中。",
+  "View Chat →": "查看 Chat →",
+  "← Chat": "← 聊天",
+  "Source excerpt · Read the original report for the full article.": "来源摘要 · 完整文章请查看原始报道。",
+  "Earlier answers are kept in Chat. Open an answer to revisit its context and continue.": "早期回答统一保留在 Chat；打开回答可以查看原有上下文并继续提问。",
+  "Earlier answers are temporarily unavailable. Please try again.": "早期回答暂时无法加载，请稍后再试。",
+  "No earlier answers yet.": "暂无早期回答。",
+  "Google Gemini receives saved term labels and recent chat titles. Only recognized topic labels from your own notes are sent; private note titles and bodies stay on the server. Free-tier input may be used by Google to improve its products.": "Google Gemini 会收到收藏词汇和近期聊天标题。自写笔记仅发送识别出的知识主题，私人笔记标题与正文留在服务器。免费服务的输入可能被 Google 用于改进产品。"
 }

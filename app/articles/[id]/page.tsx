@@ -66,11 +66,7 @@ export default async function ArticleDetail({
               {t}<T text=" · Overview →"/></Link>
           ))}
         </div>
-        <section className="panel">
-          <h2><T text="Source first"/></h2>
-          <p><T text="This page contains the available source title and excerpt. AI explains that saved context; read the original report for the full document."/></p>
-          <Link className="source" href="/news"><T text="Browse more news →"/></Link>
-        </section>
+        <p className="small"><T text="Source excerpt · Read the original report for the full article."/></p>
       </article>
       <TextSelectionHelper source={{kind:"article",id}} choices={concepts.map(c=>({text:c.term,definition:c.definition,selection:{concept:c.key},provenance:"Learning library"}))} signedIn={Boolean(user)} returnPath={"/articles/"+id}/>
     </>

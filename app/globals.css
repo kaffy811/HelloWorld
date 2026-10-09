@@ -590,7 +590,7 @@ input[hidden]{display:none}.avatar-trigger{position:relative;display:block;flex-
 .live-market-status{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.live-market-status>span:last-child{flex-basis:100%}.market-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent,#19715a)}.market-dot.muted{background:#909d98}.current-evidence{margin:24px 0}.current-evidence .quote-line{font-size:20px}.current-evidence .quote-line strong{font-size:28px}.current-evidence details{overflow-wrap:anywhere}
 
 /* Private image notes and assistant */
-.assistant-launcher {position:fixed;right:24px;bottom:24px;width:54px;height:54px;border-radius:50%;background:var(--green,#1c6954);color:white;display:grid;place-items:center;box-shadow:0 4px 16px #193c3022;z-index:30;}
+.assistant-launcher {position:fixed;right:24px;bottom:24px;width:auto;height:54px;padding:0 18px;border-radius:28px;background:var(--green,#1c6954);color:white;display:flex;align-items:center;gap:8px;box-shadow:0 4px 16px #193c3022;z-index:30;}
 .assistant-launcher:focus-visible {outline:3px solid #83bba8;outline-offset:4px;}
 .attachment-grid {display:flex;gap:12px;flex-wrap:wrap;margin:8px 0;}
 .attachment-grid figure {position:relative;margin:0;border:1px solid var(--line,#dbe5e0);border-radius:12px;padding:6px;background:white;}

@@ -92,8 +92,8 @@ export async function ExplanationDetail({
   return (
     <>
       <div className="breadcrumb">
-        <Link href={a.kind === "news" ? `/stocks/${a.ticker}/news` : "/notebook"}>
-          {a.kind === "news" ? ui(`${a.ticker} news`) : <T text="Notebook"/>}
+        <Link href={a.kind === "news" ? `/stocks/${a.ticker}/news` : a.kind === "followup" ? "/assistant?view=earlier" : "/notebook"}>
+          {a.kind === "news" ? ui(`${a.ticker} news`) : a.kind === "followup" ? <T text="Chat"/> : <T text="Notebook"/>}
         </Link>
         <span>／</span>
         {a.kind === "news" ? <T text="News explanation"/> : a.kind === "followup" ? <T text="Follow-up answer"/> : <T text="Saved explanation"/>}
@@ -101,7 +101,7 @@ export async function ExplanationDetail({
       {saved && user?.id === a.owner_id && (
         <div className="panel saved-confirmation" role="status">
           <strong><T text="Your private answer has been saved."/></strong>
-          <Link className="source" href="/notebook"><T text="View your notebook →"/></Link>
+          <Link className="source" href={a.kind==="followup"?"/assistant?view=earlier":"/notebook"}><T text={a.kind==="followup"?"View Chat →":"View your notebook →"}/></Link>
         </div>
       )}
       <article className="analysis-layout" data-readable="true">
@@ -179,7 +179,7 @@ export async function ExplanationDetail({
         </div>
         <aside className="analysis-sidebar">
           {user?.id === a.owner_id && (
-            <Link className="button" href="/notebook"><T text="← Notebook"/></Link>
+            <Link className="button" href={a.kind==="followup"?"/assistant?view=earlier":"/notebook"}><T text={a.kind==="followup"?"← Chat":"← Notebook"}/></Link>
           )}
           <section className="panel">
             <span className="eyebrow"><T text="THE COMPANY CONNECTION"/></span>
