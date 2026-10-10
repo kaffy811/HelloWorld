@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {parseFragment} from 'parse5';
-import {formatFiling,formattedPage,filingReadingText,FILING_READING_VERSION} from '../lib/news/filing-format.mjs';
+import {formatFiling,formattedPage,filingReadingText,compactFilingTables,FILING_READING_VERSION} from '../lib/news/filing-format.mjs';
 import {selectedInSource} from '../lib/ai/prompt.mjs';
 
 test('SEC HTML keeps report headings, inline XBRL values and complete financial tables',()=>{
@@ -13,6 +13,28 @@ test('SEC HTML keeps report headings, inline XBRL values and complete financial 
  assert.equal(result.pages[2].text,'Net sales 2025 Products 307,003');
  assert.doesNotMatch(JSON.stringify(result),/Hidden metadata|onclick/);
  assert.equal(selectedInSource('Net sales',{read_text:result.pages[2].text}),'Net sales');
+});
+
+test('cached accounting tables keep currency and percent signs next to values without shifting year columns',()=>{
+ const result=formatFiling('<table><tr><td>Region</td><th colspan="2">2025</th><th colspan="3">Change</th><th colspan="2">2024</th></tr><tr><td>Americas</td><td>$</td><td style="text-align:right"><strong>178,353&nbsp;</strong></td><td colspan="2">7&nbsp;</td><td>%</td><td>$</td><td>167,045</td></tr><tr><td>Europe</td><td colspan="2">111,032</td><td colspan="2">(4)</td><td>%</td><td></td><td>101,328</td></tr></table>');
+ const doc={reading_version:result.version,reading_pages:result.pages};
+ const page=formattedPage(doc),root=parseFragment(page.html),rows=[];
+ function visit(n){if(n.tagName==='tr')rows.push(n);for(const c of n.childNodes||[])visit(c);}visit(root);
+ const cells=rows.map(r=>r.childNodes.filter(n=>['td','th'].includes(n.tagName)));
+ const span=c=>Number(c.attrs.find(a=>a.name==='colspan')?.value)||1;
+ assert.deepEqual(cells.map(row=>row.map(span)),[[1,2,3,2],[1,2,3,2],[1,2,3,2]]);
+ assert.match(page.html,/>\$&nbsp;<strong>178,353<\/strong>/);
+ assert.match(page.html,/>7&nbsp;%<\/td>/);
+ assert.match(page.html,/>\(4\)&nbsp;%<\/td>/);
+ assert.equal(page.text,result.pages[0].text);
+ assert.equal(selectedInSource('$\u00a0178,353',{read_text:page.text}),'$ 178,353');
+ assert.equal(selectedInSource('(4)\u00a0%',{read_text:page.text}),'(4) %');
+ assert.equal(compactFilingTables(page.html),page.html);
+});
+
+test('currency compaction leaves unrelated cells, dates and complex row spans intact',()=>{
+ const html=formatFiling('<table><tr><td rowspan="2">$</td><td>100</td></tr><tr><td>200</td></tr></table><table><tr><td>Cash</td><td>September 27,<br>2025</td><td>35,934</td></tr><tr><td>Label</td><td>$</td><td>Not a number</td></tr></table>').pages[0].html;
+ assert.equal(compactFilingTables(html),html);
 });
 
 test('malicious and malformed source markup cannot create active HTML, styles, links or arbitrary attributes',()=>{
