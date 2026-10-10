@@ -663,8 +663,10 @@ footer{padding-right:104px}.feedback-confirmation h2{font-size:36px;line-height:
 .filing-html .filing-center {text-align:center}
 .filing-html .filing-right {text-align:right}
 .filing-html .filing-table-scroll {overflow-x:auto;max-width:100%;margin:1.2rem 0;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
-.filing-html table {width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.5;text-align:left}
+.filing-html table {width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.5;text-align:left;overflow-wrap:normal;word-break:normal}
 .filing-html td,.filing-html th {padding:.45rem .5rem;vertical-align:top;border-bottom:1px solid var(--line)}
+.filing-html table .filing-right {white-space:nowrap;font-variant-numeric:tabular-nums}
+.filing-html td:has(> strong > br),.filing-html th:has(> strong > br) {white-space:nowrap}
 .filing-html td:empty {padding:0;width:.2rem}
 .filing-html tr:last-child td {border-bottom:0}
 .filing-html td div,.filing-html td p,.filing-html th div,.filing-html th p {font-size:inherit;line-height:inherit;margin:0}
