@@ -103,7 +103,7 @@ export default async function Financials({
             : <T text="No facts available for the selected period."/>}{" "}
           {stored ? ui('Retrieved {date}.',{date:easternDate(stored.updated_at,language)}) : ""}
         </p>
-        {period&&<p className="small"><T text="Selected report: "/><Link className="source" href={filingPath(ticker,period.accession)} prefetch={false}>{period.form} · {period.filed} →</Link></p>}
+        {period&&<p className="small"><T text="Selected report:"/>{" "}<Link className="source" href={filingPath(ticker,period.accession)} prefetch={false}>{period.form} · {period.filed} →</Link></p>}
         <p className="small"><T text="Only values from the selected report are shown. Missing values are left blank; quarterly cash flow may appear only under Year to date."/></p>
         {!stored && (
           <div className="panel notice"><T text="Financial data is temporarily unavailable. Original filings are linked below when available."/></div>
