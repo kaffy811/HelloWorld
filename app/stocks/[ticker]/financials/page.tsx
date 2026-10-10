@@ -9,6 +9,7 @@ import { money } from "@/lib/market/data";
 import { easternDate } from "@/lib/news/data";
 import { FinancialFilters } from "@/components/financial-filters";
 import type { Period } from "@/lib/market/types";
+import {selectFinancialReport} from '@/lib/market/report-selection.mjs';
 export default async function Financials({
   params,
   searchParams,
@@ -23,18 +24,14 @@ export default async function Financials({
   const stored = context.data.data.find(
       (d) => d.ticker === ticker && d.kind === "financials",
     ),
-    periods = stored?.payload.periods || [];
+    periods = stored?.payload.report_periods || stored?.payload.periods || [];
   const frequency = ["annual", "quarter", "year-to-date"].includes(
     query.period || "",
   )
     ? query.period!
     : "annual";
-  const available = periods.filter((p) => p.frequency === frequency);
-  const period = available.find((p) => p.end === query.end) || available[0];
-  const balance = periods.find(
-    (p) => p.frequency === "instant" && p.end === period?.end,
-  );
-  function statement(title: string, keys: string[], p: Period | undefined) {
+  const {period,balance}=selectFinancialReport(periods,frequency,query.end);
+  function statement(title: string, keys: string[], p: Period | null) {
     return (
       <section className="panel financial-statement">
         <h2>{ui(title)}</h2>
@@ -106,7 +103,8 @@ export default async function Financials({
             : <T text="No facts available for the selected period."/>}{" "}
           {stored ? ui('Retrieved {date}.',{date:easternDate(stored.updated_at,language)}) : ""}
         </p>
-        <p className="small"><T text="Missing values are left blank; quarterly cash flow may appear only under Year to date. Figures can include later restatements."/></p>
+        {period&&<p className="small"><T text="Selected report: "/><Link className="source" href={filingPath(ticker,period.accession)} prefetch={false}>{period.form} · {period.filed} →</Link></p>}
+        <p className="small"><T text="Only values from the selected report are shown. Missing values are left blank; quarterly cash flow may appear only under Year to date."/></p>
         {!stored && (
           <div className="panel notice"><T text="Financial data is temporarily unavailable. Original filings are linked below when available."/></div>
         )}

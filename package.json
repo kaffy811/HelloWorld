@@ -13,6 +13,7 @@
     "test:db": "node tests/rls.mjs",
     "test:http": "node tests/public-http.mjs",
     "sync:data": "node scripts/sync-market-data.mjs",
+    "sync:financials": "node scripts/sync-financial-reports.mjs",
     "replay:ai": "node scripts/replay-ai.mjs",
     "report:ai": "node scripts/report-ai-usage.mjs",
     "sync:originals": "node scripts/cache-originals.mjs"

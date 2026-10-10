@@ -38,6 +38,9 @@ export type Metric = {
   url: string;
 };
 export type Period = {
+  accession?:string;
+  form?:string;
+  filed?:string;
   frequency: "annual" | "quarter" | "year-to-date" | "instant";
   start: string | null;
   end: string;
@@ -54,7 +57,7 @@ export type Filing = {
 export type StockData = {
   ticker: string;
   kind: string;
-  payload: { periods?: Period[]; filings?: Filing[] } & Partial<Price>;
+  payload: { periods?: Period[]; report_periods?:Period[]; filings?: Filing[] } & Partial<Price>;
   source: string;
   as_of: string;
   updated_at: string;

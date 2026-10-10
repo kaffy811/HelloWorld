@@ -16,7 +16,7 @@ export function FinancialFilters({
 }) {
   const [selected, setSelected] = useState(frequency),
     [selectedEnd, setEnd] = useState(end);
-  const available = periods.filter((p) => p.frequency === selected);
+  const available = periods.filter((p) => p.frequency === selected).filter((p,i,all)=>all.findIndex(v=>v.end===p.end)===i);
   return (
     <form className="financial-filter" action={`/stocks/${ticker}/financials`}>
       <label><T text="Reporting period"/><select

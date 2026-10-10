@@ -364,6 +364,8 @@
   "Removing…": "移除中…",
   "Reopen your saved conversation and continue asking.": "打开收藏的聊天，继续追问。",
   "Reported financials": "披露财务数据",
+  "Selected report: ": "所选报告：",
+  "Only values from the selected report are shown. Missing values are left blank; quarterly cash flow may appear only under Year to date.": "仅展示所选报告中的数据。缺失指标留空；季度现金流可能仅提供年初至今累计值。",
   "Reported metric": "财务指标",
   "Reporting period": "报告期",
   "Reset view": "重置视图",

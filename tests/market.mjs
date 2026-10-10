@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   financialPeriods,
+  reportFinancialPeriods,
   filingsFrom,
   cleanBars,
   priceFeatures,
@@ -9,6 +10,7 @@ import {
   parseFeed,
 } from "../lib/market/processing.mjs";
 import { resolveBookmark } from "../lib/market/concepts.mjs";
+import {selectFinancialReport} from '../lib/market/report-selection.mjs';
 const accn = "0000320193-26-000001",
   now = new Date("2026-10-08T17:00:00Z");
 const fact = (x = {}) => ({
@@ -19,6 +21,40 @@ const fact = (x = {}) => ({
   form: "10-K",
   accn,
   ...x,
+});
+test('selected report retains its original balance instead of later quarterly comparative facts',()=>{
+ const quarterAccn='0000320193-26-000002';
+ const raw={facts:{'us-gaap':{
+  Revenues:{units:{USD:[fact()]}},
+  Assets:{units:{USD:[fact({start:undefined,val:200}),fact({start:undefined,val:250,form:'10-Q',accn:quarterAccn,filed:'2026-10-07'}),fact({start:undefined,end:'2026-12-31',val:300,form:'10-Q',accn:quarterAccn,filed:'2027-02-01'})]}}
+ }}};
+ const filings=[{accession:accn,form:'10-K',period:'2026-09-30'},{accession:quarterAccn,form:'10-Q',period:'2026-12-31'}];
+ const reports=reportFinancialPeriods(raw,'0000320193',filings,now),selected=selectFinancialReport(reports,'annual','2026-09-30');
+ assert.equal(selected.period.metrics.revenue.value,100);
+ assert.equal(selected.balance.metrics.assets.value,200);
+ assert.equal(selected.balance.metrics.assets.accession,selected.period.accession);
+ assert.ok(!reports.some(p=>p.accession===quarterAccn));
+ const old=selectFinancialReport(financialPeriods(raw,'0000320193',now),'annual','2026-09-30');
+ assert.equal(old.balance.metrics.assets,undefined);
+});
+test('report selection never fills missing metrics from a different amendment or filing',()=>{
+ const a=accn,b='0000320193-26-000003',metric=(accession,form,filed,value)=>({accession,form,filed,value});
+ const periods=[
+  {frequency:'annual',end:'2026-09-30',accession:a,form:'10-K',filed:'2026-10-01',metrics:{revenue:metric(a,'10-K','2026-10-01',100)}},
+  {frequency:'annual',end:'2026-09-30',accession:b,form:'10-K/A',filed:'2026-10-07',metrics:{revenue:metric(b,'10-K/A','2026-10-07',105),eps:metric(a,'10-K','2026-10-01',2)}},
+  {frequency:'instant',end:'2026-09-30',accession:a,metrics:{assets:metric(a,'10-K','2026-10-01',200)}}
+ ];
+ const selected=selectFinancialReport(periods,'annual','2026-09-30');
+ assert.equal(selected.available.length,1);assert.equal(selected.period.accession,b);
+ assert.equal(selected.period.metrics.eps,undefined);assert.equal(selected.balance,null);
+});
+test('quarterly report selection keeps quarter and year-to-date cash flow separate',()=>{
+ const q='0000320193-26-000004',metric={accession:q,form:'10-Q',filed:'2026-08-01',value:75};
+ const periods=['quarter','year-to-date','instant'].map(frequency=>({frequency,end:'2026-06-30',accession:q,form:'10-Q',filed:metric.filed,metrics:frequency==='year-to-date'?{operating_cash:metric}:frequency==='instant'?{assets:metric}:{revenue:metric}}));
+ assert.equal(selectFinancialReport(periods,'quarter').period.metrics.operating_cash,undefined);
+ assert.equal(selectFinancialReport(periods,'year-to-date').period.metrics.operating_cash.value,75);
+ assert.equal(selectFinancialReport(periods,'quarter').balance.metrics.assets.accession,q);
+ assert.deepEqual(selectFinancialReport([]),{available:[],period:null,balance:null});
 });
 test("SEC normalization keeps annual, quarterly and cumulative durations separate; latest filing wins", () => {
   const raw = {
