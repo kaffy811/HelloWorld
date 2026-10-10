@@ -128,3 +128,12 @@ const laterFiling=await (await fetch(origin+'/stocks/AAPL/filings/0000320193-26-
 const invalidFiling=await fetch(origin+'/stocks/AAPL/filings/0000000000-00-000001');assert.equal(invalidFiling.status,404);
 const hostileReturn=await (await fetch(origin+'/articles/c811fdc5-0de9-440e-b74d-c1b6428c962e?from=https%3A%2F%2Fevil.invalid')).text();assert.ok(!hostileReturn.includes('href="https://evil.invalid"'));
 console.log('PASS: provider news and paginated SEC originals are readable in-site; stock return is retained; unknown reports and unsafe return links are rejected.');
+
+const structuredReport=await (await fetch(origin+'/stocks/AAPL/filings/0000320193-25-000079?part=9')).text();
+assert.match(structuredReport,/class="original-body filing-html"/);
+assert.match(structuredReport,/<h2[^>]*><strong>CONSOLIDATED STATEMENTS OF OPERATIONS/);
+assert.match(structuredReport,/<table>[\s\S]*?Total net sales[\s\S]*?416,161/);
+const reportMarkup=structuredReport.match(/<div class="original-body filing-html">([\s\S]*?)<\/div><nav/)[1];
+assert.ok(!/<(?:script|iframe|img|style)\b|\son\w+=|\sstyle=|\shref=/i.test(reportMarkup));
+const clampedReport=await (await fetch(origin+'/stocks/AAPL/filings/0000320193-25-000079?part=999')).text();assert.match(clampedReport,/Page <!-- -->14<!-- --> of <!-- -->14/);
+console.log('PASS: SEC original HTML preserves financial table values, strips active source markup and clamps reading pagination.');

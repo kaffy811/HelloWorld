@@ -8,7 +8,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "test": "node tests/onboarding.mjs && node --test tests/news.mjs tests/market.mjs tests/exploration.mjs tests/reader.mjs tests/live-context.mjs tests/assistant.mjs tests/billing.mjs tests/auth.mjs tests/profile.mjs tests/product-feedback.mjs tests/vocabulary.mjs",
+    "test": "node tests/onboarding.mjs && node --test tests/news.mjs tests/market.mjs tests/exploration.mjs tests/reader.mjs tests/live-context.mjs tests/assistant.mjs tests/billing.mjs tests/auth.mjs tests/profile.mjs tests/product-feedback.mjs tests/vocabulary.mjs tests/filing-format.mjs",
     "sync:news": "node scripts/sync-us-news.mjs",
     "test:db": "node tests/rls.mjs",
     "test:http": "node tests/public-http.mjs",
@@ -21,6 +21,7 @@
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.116.0",
     "next": "16.3.8",
+    "parse5": "8.0.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "sharp": "0.35.5"

@@ -13,11 +13,14 @@ import {storedFiling} from '@/lib/news/filing';
 import {filingPath} from '@/lib/news/reading.mjs';
 import {filingDocument} from '@/lib/news/documents.mjs';
 import {adminClient} from '@/lib/news/admin.mjs';
+import {filingReadingText} from '@/lib/news/filing-format.mjs';
+import {originalPage} from '@/lib/news/original-text.mjs';
 import {enrichSource} from './context';
 import type {ReaderSource,SourceSnapshot} from './types';
 function strings(value:unknown):string[]{if(typeof value==='string')return [value];if(Array.isArray(value))return value.flatMap(strings);if(value&&typeof value==='object')return Object.entries(value).filter(([k])=>k!=='evidence_ids'&&k!=='sentiment').flatMap(([,v])=>strings(v));return [];}
 export async function resolveSource(s:SupabaseClient,input:ReaderSource,query=''):Promise<SourceSnapshot>{
  if(!input||typeof input!=='object'||typeof input.id!=='string')throw new HttpError(400,'Choose an article to explain.');
+ if(input.part!==undefined&&(!Number.isInteger(input.part)||input.part<1||input.part>300))throw new HttpError(400,'Invalid report page.');
  let title='',read='',ticker:string|null=null,url='',scope='',evidence:SourceSnapshot['evidence']=[];
  if(input.kind==='general'){
   if(!UUID.test(input.id))throw new HttpError(400,'Invalid conversation.');
@@ -27,7 +30,7 @@ export async function resolveSource(s:SupabaseClient,input:ReaderSource,query=''
   const filing=await storedFiling(s,symbol,accession);if(!filing)throw new HttpError(404,'Financial report unavailable.');
   let doc;try{doc=await filingDocument(adminClient(),filing.url,{fetchMissing:true});}catch{throw new HttpError(503,'The original report could not be loaded. Please retry; the financial summary is not the full report.');}
   if(!doc)throw new HttpError(503,'Financial report unavailable.');
-  ticker=symbol;title=filing.title;url=filingPath(symbol,accession);read=title+'\n\n'+readingPassage(doc.full_text,query);scope='Full SEC original is cached for in-site reading. AI receives the selected relevant passage only.';evidence=[{id:'source',label:'SEC original report',text:read,url:filing.url}];
+  ticker=symbol;title=filing.title;url=filingPath(symbol,accession);read=title+'\n\n'+readingPassage(input.part!==undefined&&!doc.reading_pages?.length?originalPage(doc.full_text,input.part).text:filingReadingText(doc,input.part),query);scope='Full SEC original is cached for in-site reading. AI receives the selected relevant passage only.';evidence=[{id:'source',label:'SEC original report',text:read,url:filing.url}];
  }else if(input.kind==='concept'){
   const c=topics.find(t=>t.key===input.id);if(!c)throw new HttpError(404,'Learning topic unavailable.');
   title=c.term;read=[c.term,c.definition,...(readingNotes[c.key as keyof typeof readingNotes]||c.notes)].join('\n\n');url='/learn/'+c.key;scope='Learning library definition and reading notes';evidence=[{id:c.key,label:c.term,text:read,url:c.source}];
@@ -44,7 +47,7 @@ export async function resolveSource(s:SupabaseClient,input:ReaderSource,query=''
    // Existing AI prose is context to explain, never upgraded to primary factual evidence.
   }else if(input.kind==='article'){
    const {data:a}=await s.from('market_articles').select('id,title,excerpt,source,source_key,source_url,tickers,published_at,body_text').eq('id',input.id).maybeSingle();if(!a)throw new HttpError(404,'Article unavailable.');
-   title=a.title;read=[a.title,a.excerpt||''].join('\n\n');url='/articles/'+a.id;ticker=a.tickers?.[0]||null;scope='Available source title and excerpt only; published '+a.published_at;const original=await articleOriginal(a);if(original){read=a.title+'\n\n'+readingPassage(original.text,query);scope='Provider original is available for in-site reading; AI receives selected passages only. Published '+a.published_at;}evidence=[{id:'source',label:a.source+' — available source text',text:read,url:original?.url||a.source_url}];
+   title=a.title;read=[a.title,a.excerpt||''].join('\n\n');url='/articles/'+a.id;ticker=a.tickers?.[0]||null;scope='Available source title and excerpt only; published '+a.published_at;const original=await articleOriginal(a);if(original){read=a.title+'\n\n'+readingPassage(input.part===undefined?original.text:original.reading_pages?.length?filingReadingText({...original,full_text:original.text},input.part):originalPage(original.text,input.part).text,query);scope='Provider original is available for in-site reading; AI receives selected passages only. Published '+a.published_at;}evidence=[{id:'source',label:a.source+' — available source text',text:read,url:original?.url||a.source_url}];
   }else if(input.kind==='lesson'){
    const {data:a}=await s.from('ai_outputs').select('*').eq('id',input.id).eq('kind','lesson').maybeSingle();if(!a)throw new HttpError(404,'Lesson unavailable.');
    title=a.content.title;read=title+'\n\n'+a.content.answer;url='/learn/ai/'+a.id;scope='Saved AI learning article with its original learning evidence';evidence=a.source_snapshot.evidence;

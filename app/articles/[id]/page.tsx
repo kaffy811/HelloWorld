@@ -1,6 +1,8 @@
 import {getTranslator} from "@/lib/i18n/server";
 
 import {articleOriginal} from '@/lib/news/original';
+import {formattedPage} from '@/lib/news/filing-format.mjs';
+import {originalPage} from '@/lib/news/original-text.mjs';
 import {OriginalReading} from '@/components/original-reading';
 import {stockReturn} from '@/lib/news/reading.mjs';
 import {T} from "@/components/language-provider";
@@ -34,6 +36,7 @@ export default async function ArticleDetail({
   const a = data as Article;
   const q=await searchParams,from=stockReturn(q.from,a.tickers),path='/articles/'+id;
   const original=await articleOriginal(a);
+  const part=original?(formattedPage(original,Number(q.part)||1)||originalPage(original.text,Number(q.part)||1)).page:1;
   const {data:{user}}=await s.auth.getUser();const signedIn=!!user&&!user.is_anonymous;
   return (
     <>
@@ -49,7 +52,7 @@ export default async function ArticleDetail({
         <h1>{a.title}</h1>
         <time className="small"><T text="Published "/>{easternDate(a.published_at)}</time>
         <ArticleAssistant source={{kind:"article",id}} title={a.title} signedIn={signedIn} returnPath={path+(from?'?from='+encodeURIComponent(from):'')}/>
-        {original?<OriginalReading text={original.text} path={path} part={Number(q.part)||1} from={from}/>:<><div className="panel notice"><p><T text="The original article could not be loaded. Please retry; this is a source summary only."/></p><Link className="button secondary" href={path+(from?'?from='+encodeURIComponent(from):'')}><T text="Try again"/></Link></div><p className="lead">{a.excerpt}</p></>}
+        {original?<OriginalReading text={original.text} path={path} part={part} from={from} formatted={original}/>:<><div className="panel notice"><p><T text="The original article could not be loaded. Please retry; this is a source summary only."/></p><Link className="button secondary" href={path+(from?'?from='+encodeURIComponent(from):'')}><T text="Try again"/></Link></div><p className="lead">{a.excerpt}</p></>}
         <a className="source small" href={original?.url||a.source_url} target="_blank" rel="noopener noreferrer"><T text="Source website ↗"/></a>
         <div className="article-companies">
           {a.tickers.map((t) => (
@@ -59,7 +62,7 @@ export default async function ArticleDetail({
         </div>
 
       </article>
-      <TextSelectionHelper source={{kind:"article",id}} choices={concepts.map(c=>({text:c.term,definition:c.definition,selection:{concept:c.key},provenance:"Learning library"}))} signedIn={signedIn} returnPath={path+(from?'?from='+encodeURIComponent(from):'')}/>
+      <TextSelectionHelper source={{kind:"article",id,part}} choices={concepts.map(c=>({text:c.term,definition:c.definition,selection:{concept:c.key},provenance:"Learning library"}))} signedIn={signedIn} returnPath={path+(from?'?from='+encodeURIComponent(from):'')}/>
     </>
   );
 }

@@ -460,6 +460,13 @@ try {
     const lessons=Array.from({length:5},(_,slot)=>({kind:'lesson',slot,topic_key:'topic-'+slot,content:{},source_snapshot:{},source_url:'/learn',language:'en'}));await denied("select * from public.complete_reader_generation($1,$2,'{}',null,null,current_date)",[daily,JSON.stringify(lessons.slice(0,4))]);assert.equal((await db.query('select * from public.ai_daily_sets')).rows.length,0);
     await db.query("select * from public.complete_reader_generation($1,$2,'{}',null,null,current_date)",[daily,JSON.stringify(lessons)]);assert.equal((await db.query('select * from public.ai_daily_sets')).rows.length,1);
   });
+  await check('formatted report cache rejects malformed or unbounded pages and remains service-only',async()=>{
+    await role('service_role');const url='https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm';
+    await db.query("insert into public.filing_documents(source_url,full_text,content_sha256,char_count,reading_pages,reading_version) values($1,$2,$3,200,$4,'sec-html-v1')",[url,'x'.repeat(200),'a'.repeat(64),JSON.stringify([{html:'<p>Report</p>',text:'Report'}])]);
+    for(const pages of [{},[],Array.from({length:301},()=>({html:'',text:''}))])await denied('update public.filing_documents set reading_pages=$1 where source_url=$2',[JSON.stringify(pages),url]);
+    for(const reader of ['anon','authenticated']){await role(reader,u1);await denied('select reading_pages from public.filing_documents');await denied("update public.filing_documents set reading_pages='[]'");}
+    await role('service_role');assert.equal((await db.query('select reading_version from public.filing_documents where source_url=$1',[url])).rows[0].reading_version,'sec-html-v1');
+  });
   await check('market/document caches are service-only and shared market lease admits one refresh',async()=>{
     await role('anon');await denied('select * from public.market_refresh_state');await denied('select * from public.filing_documents');await denied('select public.reserve_market_refresh()');
     await role('authenticated',u1);await denied('select * from public.filing_documents');await denied('update public.market_refresh_state set expires_at=now()');

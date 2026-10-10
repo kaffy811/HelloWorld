@@ -954,5 +954,6 @@
   "The original article could not be loaded. Please retry; this is a source summary only.": "暂时无法载入新闻原文，请重试；下方仅为来源摘要。",
   "Ask a question about stocks or any everyday topic. Current facts need a source; the assistant does not browse.": "你可以问股票知识或日常问题。最新事实需要可靠来源，助手目前不联网搜索。",
   "Type your question…": "输入你的问题……",
-  "Image uploads are not supported in chat. Please type your question.": "聊天暂不支持图片，请输入文字问题。"
+  "Image uploads are not supported in chat. Please type your question.": "聊天暂不支持图片，请输入文字问题。",
+  "Sign in for a short AI explanation.": "登录后获取简短的 AI 讲解。"
 }

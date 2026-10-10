@@ -654,3 +654,21 @@ footer{padding-right:104px}.feedback-confirmation h2{font-size:36px;line-height:
 .compact-search input {min-width:0;flex:1;}
 .compact-search button {white-space:nowrap;flex-shrink:0;}
 .ai-lesson-grid .ai-output-footer, .chat-answer .ai-output-footer {justify-content:flex-end;}
+
+/* The SEC reading copy retains source structure inside a calm, responsive page. */
+.filing-html {color:var(--ink);font-size:1rem;line-height:1.7;overflow-wrap:anywhere}
+.filing-html > div,.filing-html > p {margin:.7rem 0}
+.filing-html p {font-size:1rem;line-height:1.7;color:inherit;margin:.7rem 0}
+.filing-html h1,.filing-html h2,.filing-html h3,.filing-html h4 {font-size:1.25rem;line-height:1.45;margin:1.6rem 0 .75rem;letter-spacing:-.02em}
+.filing-html .filing-center {text-align:center}
+.filing-html .filing-right {text-align:right}
+.filing-html .filing-table-scroll {overflow-x:auto;max-width:100%;margin:1.2rem 0;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
+.filing-html table {width:100%;border-collapse:collapse;font-size:.9rem;line-height:1.5;text-align:left}
+.filing-html td,.filing-html th {padding:.45rem .5rem;vertical-align:top;border-bottom:1px solid var(--line)}
+.filing-html td:empty {padding:0;width:.2rem}
+.filing-html tr:last-child td {border-bottom:0}
+.filing-html td div,.filing-html td p,.filing-html th div,.filing-html th p {font-size:inherit;line-height:inherit;margin:0}
+.filing-html strong {font-weight:650}
+.filing-html ul,.filing-html ol {padding-left:1.5rem}
+.filing-html sup,.filing-html sub {font-size:.75em}
+@media(max-width:640px){.filing-html table {min-width:600px}.filing-html h2 {font-size:1.1rem}.filing-html {font-size:.95rem}}
